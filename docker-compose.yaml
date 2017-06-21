@@ -8,7 +8,7 @@ networks:
 
 services:
   search:
-    image: wille/aca:elastic2
+    image: quay.io/acaprojects/elastic
     container_name: elastic
     restart: unless-stopped
     user: elasticsearch
@@ -42,7 +42,7 @@ services:
       - CB_USER=$CB_USER
       - CB_PASS=$CB_PASS
   app:
-    image: wille/aca:engine2
+    image: quay.io/acaprojects/engine
     restart: unless-stopped
     container_name: engine
     networks:
