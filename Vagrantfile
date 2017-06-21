@@ -1,5 +1,5 @@
 # List plugins dependencies
-plugins_dependencies = %w( vagrant-docker-compose vagrant-docker-login )
+plugins_dependencies = %w( vagrant-docker-compose )
 plugin_status = false
 plugins_dependencies.each do |plugin_name|
   unless Vagrant.has_plugin? plugin_name
@@ -18,6 +18,7 @@ end
 
 Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/xenial64"
+
   config.vm.provision :docker
-  config.vm.provision :docker_compose, yml: "/home/aca-apps/setup-dev/docker-compose.yml", run: "always", compose_version: "2.1"
+  config.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yaml", run: "always"
 end
