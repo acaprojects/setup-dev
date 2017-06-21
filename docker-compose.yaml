@@ -1,0 +1,65 @@
+version: "2.1"
+networks:
+  aca:
+    driver: bridge
+#    ipam:
+#      config:
+#      - subnet: 172.18.0.0/28
+
+services:
+  search:
+    image: wille/aca:elastic2
+    container_name: elastic
+    restart: unless-stopped
+    user: elasticsearch
+    networks:
+      - aca
+    ports:
+      - "9200:9200"
+    hostname: elastic
+    volumes:
+     - ./config/elastic/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:Z
+     - ./config/elastic/logging.yml:/usr/share/elasticsearch/config/logging.yml:Z
+     - ./data/elastic:/usr/share/elasticsearch/data:Z
+    environment:
+      - TZ=$TZ
+      - ES_CLUSTER=$ES_CLUSTER
+      - CB_USER=$CB_USER
+      - CB_PASS=$CB_PASS
+  db:
+    image: couchbase:4.6.2
+    container_name: couch
+    restart: unless-stopped
+    networks:
+      - aca
+    ports:
+      - "8091:8091"
+    hostname: couch
+    volumes:
+      - ./data/couch:/opt/couchbase/var:Z
+    environment:
+      - TZ=$TZ
+      - CB_USER=$CB_USER
+      - CB_PASS=$CB_PASS
+  app:
+    image: wille/aca:engine2
+    restart: unless-stopped
+    container_name: engine
+    networks:
+      - aca
+    ports:
+      - "8080:8080"
+    hostname: engine
+    depends_on:
+      - db
+      - search
+    volumes:
+#      - ${RUBY_ENGINE_APP}:/home/aca-apps/ruby-engine-app:Z
+      - ${ACA_DEVICE_MODULES}:/home/aca-apps/aca-device-modules:Z
+    environment:
+      - TZ=$TZ
+      - ELASTIC=elastic
+      - ELASTIC_INDEX=$ES_CLUSTER
+      - COUCHBASE_HOST=couch
+      - COUCHBASE_PASSWORD=$CB_PASS
+      - UV_THREADPOOL_SIZE=32
