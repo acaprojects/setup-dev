@@ -18,6 +18,7 @@ end
 
 Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/xenial64"
+  config.vm.provision :shell, inline: "cp -f /vagrant/.env ."
 
   config.vm.provision :docker
   config.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yaml", run: "always"
