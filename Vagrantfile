@@ -31,8 +31,8 @@ Vagrant.configure("2") do |config|
   end
 
   # Init Couchbase: Create cluster, add this node, create bucket, create XDCR to elasticsearch
-  config.vm.provision :ansible_local do |ansible|
-    ansible.playbook       = "ansible/couch.yml"
-    ansible.verbose        = true
-  end
+  #config.vm.provision :ansible_local do |ansible|
+  #  ansible.playbook       = "ansible/couch.yml"
+  #  ansible.verbose        = true
+  #end
 end

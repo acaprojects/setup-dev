@@ -1,11 +1,34 @@
 # Elasticsearch: Upload couchbase template and initialise DEV 'aca' index
 - name: Elasticsearch Initialisation
   hosts: all
-  user: root
+
+  vars:
+    es_host: localhost
+    es_port: 9200
+    es_index: aca
+    es_template: /vagrant/config/elastic/es_template.json
+    es_shards: 1
+    es_replicas: 0
 
   tasks:
+  - name: Check for aca index
+    shell: "curl -s -o /dev/null -w \"%{http_code}\"  http://{{es_host}}:{{es_port}}/{{es_index}}/"
+    register: aca_index
+
+  - name: Check for couchbase template
+    shell: "curl -s -o /dev/null -w \"%{http_code}\"  http://{{es_host}}:{{es_port}}/_template/couchbase"
+    register: couchbase_template
+
   - name: Upload Couchbase template
-    shell: /bin/curl  -v -X PUT 127.0.0.1:9200/_template/couchbase -d /vagrant/config/elastic/es_template.json
+    when: couchbase_template['stdout'] == "404"
+    shell: "curl -v -X PUT {{es_host}}:{{es_port}}/_template/couchbase -d @{{es_template}}"
 
   - name: Add aca index
-    shell: /bin/curl -v -X PUT 127.0.0.1:9200/aca -d '{"settings" : {"index" : {"number_of_shards" : 1,"number_of_replicas" : 0}}}'
+    when: aca_index['stdout'] == "404"
+    uri: 
+      url: "http://{{es_host}}:{{es_port}}/{{es_index}}"
+      method: PUT
+      return_content: yes
+      body: "{\"settings\" : {\"index\" : {\"number_of_shards\" : {{es_shards}},\"number_of_replicas\" : {{es_replicas}}}}}"
+      body_format: json
+      status_code: 200
