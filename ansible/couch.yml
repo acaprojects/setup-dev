@@ -1,0 +1,65 @@
+TODO: Turn this old bash script into an ansible playbook 
+
+
+#!/bin/bash
+# Set up an 'aca' bucket on local couch cluster with size and credentials from env.
+# Add XDCR to elasticsearch
+
+if [ ! -d "/opt/couchbase/var/lib/couchbase/data/aca" ]; then
+	echo "ACA bucket not found, initialising Couchbase cluster..."
+
+	# Defaults
+	if [ -z "$COUCHBASE_USER" ]; then
+	  COUCHBASE_USER=admin
+	fi
+	if [ -z "$COUCHBASE_PASSWORD" ]; then
+	  COUCHBASE_PASSWORD=devenvpass
+	fi
+	if [ -z "$COUCHBASE_CLUSTER_RAM" ]; then
+	  COUCHBASE_CLUSTER_RAM=256
+	fi
+	if [ -z "$COUCHBASE_BUCKET_RAM" ]; then
+	  COUCHBASE_BUCKET_RAM=128
+	fi
+
+	# Init Node
+	docker exec -i couch couchbase-cli node-init -c 127.0.0.1:8091 -u $COUCHBASE_USER -p $COUCHBASE_PASSWORD --node-init-data-path=/opt/couchbase/var/lib/couchbase/data
+	# Init Cluster
+	docker exec -i couch couchbase-cli cluster-init -c 127.0.0.1:8091 --cluster-init-username=$COUCHBASE_USER --cluster-init-password=$COUCHBASE_PASSWORD --cluster-init-ramsize=$COUCHBASE_CLUSTER_RAM --cluster-username=$COUCHBASE_USER --cluster-password=$COUCHBASE_PASSWORD
+    # Init Bucket
+    docker exec -i couch couchbase-cli bucket-create --bucket=aca --bucket-type=couchbase --bucket-password=$COUCHBASE_PASSWORD --bucket-ramsize=$COUCHBASE_CLUSTER_RAM --bucket-replica=1 -c 127.0.0.1:8091 -u $COUCHBASE_USER -p $COUCHBASE_PASSWORD
+    # Init XDCR to elasticsearch
+    docker exec -i couch couchbase-cli xdcr-setup -c 127.0.0.1:8091 -u $COUCHBASE_USER -p $COUCHBASE_PASSWORD --create --xdcr-cluster-name=elasticsearch --xdcr-hostname=elastic:9091 --xdcr-username=$COUCHBASE_USER --xdcr-password=$COUCHBASE_PASSWORD
+    docker exec -i couch couchbase-cli xdcr-replicate -c 127.0.0.1:8091 -u $COUCHBASE_USER -p $COUCHBASE_PASSWORD --create --xdcr-from-bucket=aca --xdcr-cluster-name=elasticsearch --xdcr-to-bucket=aca --xdcr-replication-mode=capi
+fi
+
+# xdcr-setup OPTIONS:
+#   --create                               create a new xdcr configuration
+#   --edit                                 modify existed xdcr configuration
+#   --delete                               delete existed xdcr configuration
+#   --list                                 list all xdcr configurations
+#   --xdcr-cluster-name=CLUSTERNAME        cluster name
+#   --xdcr-hostname=HOSTNAME               remote host name to connect to
+#   --xdcr-username=USERNAME               remote cluster admin username
+#   --xdcr-password=PASSWORD               remote cluster admin password
+#   --xdcr-demand-encryption=[0|1]         allow data encrypted using ssl
+#   --xdcr-certificate=CERTIFICATE         pem-encoded certificate. Need be present if xdcr-demand-encryption is true
+
+# xdcr-replicate OPTIONS:
+#   --create                               create and start a new replication
+#   --delete                               stop and cancel a replication
+#   --list                                 list all xdcr replications
+#   --pause                                pause the replication
+#   --resume                               resume the replication
+#   --settings                             update settings for the replication
+#   --xdcr-replicator=REPLICATOR           replication id
+#   --xdcr-from-bucket=BUCKET              local bucket name to replicate from
+#   --xdcr-cluster-name=CLUSTERNAME        remote cluster to replicate to
+#   --xdcr-to-bucket=BUCKETNAME            remote bucket to replicate to
+#   --max-concurrent-reps=[32]             maximum concurrent replications per bucket, 8 to 256.
+#   --checkpoint-interval=[1800]           intervals between checkpoints, 60 to 14400 seconds.
+#   --worker-batch-size=[500]              doc batch size, 500 to 10000.
+#   --doc-batch-size=[2048]KB              document batching size, 10 to 100000 KB
+#   --failure-restart-interval=[30]        interval for restarting failed xdcr, 1 to 300 seconds
+#   --optimistic-replication-threshold=[256] document body size threshold (bytes) to trigger optimistic replication
+#   --xdcr-replication-mode=[xmem|capi]    replication protocol, either capi or xmem.

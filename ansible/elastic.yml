@@ -1,0 +1,11 @@
+# Elasticsearch: Upload couchbase template and initialise DEV 'aca' index
+- name: Elasticsearch Initialisation
+  hosts: all
+  user: root
+
+  tasks:
+  - name: Upload Couchbase template
+    shell: /bin/curl  -v -X PUT 127.0.0.1:9200/_template/couchbase -d /vagrant/config/elastic/es_template.json
+
+  - name: Add aca index
+    shell: /bin/curl -v -X PUT 127.0.0.1:9200/aca -d '{"settings" : {"index" : {"number_of_shards" : 1,"number_of_replicas" : 0}}}'

@@ -17,9 +17,22 @@ else
 end
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "ubuntu/xenial64"
-  config.vm.provision :shell, inline: "cp -f /vagrant/.env ."
+  config.vm.box = "bento/ubuntu-16.10"
+  # Link docker-compose .env file to Vagrant's working directory
+  config.vm.provision :shell, inline: "ln -sf /vagrant/.env"
 
   config.vm.provision :docker
   config.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yaml", run: "always"
+
+  # Init Elasticsearch: Create aca index and upload our couchbase tamplate
+  config.vm.provision :ansible_local do |ansible|
+    ansible.playbook       = "ansible/elastic.yml"
+    ansible.verbose        = true
+  end
+
+  # Init Couchbase: Create cluster, add this node, create bucket, create XDCR to elasticsearch
+  config.vm.provision :ansible_local do |ansible|
+    ansible.playbook       = "ansible/couch.yml"
+    ansible.verbose        = true
+  end
 end
