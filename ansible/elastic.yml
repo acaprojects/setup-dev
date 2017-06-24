@@ -12,16 +12,16 @@
 
   tasks:
   - name: Check for aca index
-    shell: "curl -s -o /dev/null -w \"%{http_code}\"  http://{{es_host}}:{{es_port}}/{{es_index}}/"
+    command: "curl -s -o /dev/null -w \"%{http_code}\"  http://{{es_host}}:{{es_port}}/{{es_index}}/"
     register: aca_index
 
   - name: Check for couchbase template
-    shell: "curl -s -o /dev/null -w \"%{http_code}\"  http://{{es_host}}:{{es_port}}/_template/couchbase"
+    command: "curl -s -o /dev/null -w \"%{http_code}\"  http://{{es_host}}:{{es_port}}/_template/couchbase"
     register: couchbase_template
 
   - name: Upload Couchbase template
     when: couchbase_template['stdout'] == "404"
-    shell: "curl -v -X PUT {{es_host}}:{{es_port}}/_template/couchbase -d @{{es_template}}"
+    command: "curl -v -X PUT {{es_host}}:{{es_port}}/_template/couchbase -d @{{es_template}}"
 
   - name: Add aca index
     when: aca_index['stdout'] == "404"
