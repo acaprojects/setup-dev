@@ -1,37 +1,58 @@
-TODO: Turn this old bash script into an ansible playbook 
+# Initialise Couchbase
+# Adapted from https://github.com/couchbaselabs/ansible-couchbase-server/blob/master/examples/cluster_init.yml
+- name: Couchbase Initialisation
+  hosts: default
+
+  vars:
+    cb_primary_node: localhost
+    cb_port: 8091
+    cb_admin: admin
+    cb_password: devenvpass
+    cb_cluster_ram: 256
+    cb_services: data,index,query
+    cb_bucket_name: aca
+    cb_bucket_type: couchbase
+    cb_bucket_ram: 128
+    cb_bucket_port: 11211
+    cb_bucket_replicas: 1
+
+  tasks:
+    - name: Get major version
+      shell: docker exec -i couch cat /opt/couchbase/VERSION.txt | cut -d '.' -f1
+      register: cb_major_version
+
+    - name: Wait for Admin
+      wait_for: "port=8091 delay=2"
+
+    - name: Initialize primary node
+      command: docker exec -i couch "/opt/couchbase/bin/couchbase-cli node-init -c {{cb_primary_node}}:{cb_port} --user={{cb_admin}} --password={{cb_password}} --cluster-init-username={{cb_admin}} --node-init-hostname={{ansible_fqdn}}"
+      when: cb_major_version['stdout'] != "2"
+
+    - name: Wait for Admin
+      wait_for: "port=8091 delay=2"
+
+    - name: Configure cluster settings
+      command: docker exec -i couch "/opt/couchbase/bin/couchbase-cli cluster-init -c {{cb_primary_node}}:{cb_port} --user={{cb_admin}} --password={{cb_password}} --cluster-init-username={{cb_admin}} --cluster-init-password={{cb_password}} --cluster-init-port=8091 --cluster-init-ramsize={{cb_cluster_ram}}"
+      when: cb_major_version['stdout'] != "4"
+
+    - name: Configure cluster settings
+      command: docker exec -i couch "/opt/couchbase/bin/couchbase-cli cluster-init -c {{cb_primary_node}}:{cb_port} --user={{cb_admin}} --password={{cb_password}} --cluster-init-username={{cb_admin}} --cluster-init-password={{cb_password}} --cluster-init-port=8091 --cluster-init-ramsize={{cb_cluster_ram}} --services=services={{cb_services}}"
+      when: cb_major_version['stdout'] == "4"
+
+    - name: Verify node health
+      shell: docker exec -i "/opt/couchbase/bin/couchbase-cli server-list -c {{cb_primary_node}}:{{cb_admin_port}} --user={{cb_admin}} --password={{cb_password}} | awk '/{{cb_primary_node}}:{{cb_admin_port}}/ {print $3}'"
+      register: cb_health
+      failed_when: cb_health['stdout'] != "healthy"
+
+    - name: Create new bucket
+      command: docker exec -i couch "/opt/couchbase/bin/couchbase-cli bucket-create -c {{cb_primary_node}}:{cb_port} --user={{cb_admin}} --password={{cb_password}} --bucket={{cb_bucket_name}} --bucket-type={{cb_bucket_type}} --bucket-password={{cb_password}} --bucket-ramsize={{cb_bucket_ram}} --bucket-replica={{cb_bucket_replicas}}"
+      when: cb_health['stdout'] == "healthy"
 
 
-#!/bin/bash
-# Set up an 'aca' bucket on local couch cluster with size and credentials from env.
-# Add XDCR to elasticsearch
-
-if [ ! -d "/opt/couchbase/var/lib/couchbase/data/aca" ]; then
-	echo "ACA bucket not found, initialising Couchbase cluster..."
-
-	# Defaults
-	if [ -z "$COUCHBASE_USER" ]; then
-	  COUCHBASE_USER=admin
-	fi
-	if [ -z "$COUCHBASE_PASSWORD" ]; then
-	  COUCHBASE_PASSWORD=devenvpass
-	fi
-	if [ -z "$COUCHBASE_CLUSTER_RAM" ]; then
-	  COUCHBASE_CLUSTER_RAM=256
-	fi
-	if [ -z "$COUCHBASE_BUCKET_RAM" ]; then
-	  COUCHBASE_BUCKET_RAM=128
-	fi
-
-	# Init Node
-	docker exec -i couch couchbase-cli node-init -c 127.0.0.1:8091 -u $COUCHBASE_USER -p $COUCHBASE_PASSWORD --node-init-data-path=/opt/couchbase/var/lib/couchbase/data
-	# Init Cluster
-	docker exec -i couch couchbase-cli cluster-init -c 127.0.0.1:8091 --cluster-init-username=$COUCHBASE_USER --cluster-init-password=$COUCHBASE_PASSWORD --cluster-init-ramsize=$COUCHBASE_CLUSTER_RAM --cluster-username=$COUCHBASE_USER --cluster-password=$COUCHBASE_PASSWORD
-    # Init Bucket
-    docker exec -i couch couchbase-cli bucket-create --bucket=aca --bucket-type=couchbase --bucket-password=$COUCHBASE_PASSWORD --bucket-ramsize=$COUCHBASE_CLUSTER_RAM --bucket-replica=1 -c 127.0.0.1:8091 -u $COUCHBASE_USER -p $COUCHBASE_PASSWORD
     # Init XDCR to elasticsearch
-    docker exec -i couch couchbase-cli xdcr-setup -c 127.0.0.1:8091 -u $COUCHBASE_USER -p $COUCHBASE_PASSWORD --create --xdcr-cluster-name=elasticsearch --xdcr-hostname=elastic:9091 --xdcr-username=$COUCHBASE_USER --xdcr-password=$COUCHBASE_PASSWORD
-    docker exec -i couch couchbase-cli xdcr-replicate -c 127.0.0.1:8091 -u $COUCHBASE_USER -p $COUCHBASE_PASSWORD --create --xdcr-from-bucket=aca --xdcr-cluster-name=elasticsearch --xdcr-to-bucket=aca --xdcr-replication-mode=capi
-fi
+#    docker exec -i couch couchbase-cli xdcr-setup -c 127.0.0.1:8091 -u $COUCHBASE_USER -p $COUCHBASE_PASSWORD --create --xdcr-cluster-name=elasticsearch --xdcr-hostname=elastic:9091 --xdcr-username=$COUCHBASE_USER --xdcr-password=$COUCHBASE_PASSWORD
+#    docker exec -i couch couchbase-cli xdcr-replicate -c 127.0.0.1:8091 -u $COUCHBASE_USER -p $COUCHBASE_PASSWORD --create --xdcr-from-bucket=aca --xdcr-cluster-name=elasticsearch --xdcr-to-bucket=aca --xdcr-replication-mode=capi
+
 
 # xdcr-setup OPTIONS:
 #   --create                               create a new xdcr configuration
