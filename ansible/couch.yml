@@ -1,20 +1,26 @@
 # Initialise Couchbase
 # Adapted from https://github.com/couchbaselabs/ansible-couchbase-server/blob/master/examples/cluster_init.yml
+# Uses couchbase-cli: https://developer.couchbase.com/documentation/server/4.6/cli/cbcli-intro.html
 - name: Couchbase Initialisation
   hosts: default
 
   vars:
-    cb_primary_node: localhost
+    cb_host: 127.0.0.1
     cb_port: 8091
-    cb_admin: admin
+    cb_hostname: 127.0.0.1
+    cb_user: admin
     cb_password: devenvpass
     cb_cluster_ram: 256
-    cb_services: data,index,query
-    cb_bucket_name: aca
+    cb_cluster_index_ram: 256
+    cb_services: data,index
+    cb_bucket: aca
     cb_bucket_type: couchbase
     cb_bucket_ram: 128
     cb_bucket_port: 11211
     cb_bucket_replicas: 1
+    es_host: elastic
+    es_port: 9091
+    es_index: aca
 
   tasks:
     - name: Get major version
@@ -25,62 +31,66 @@
       wait_for: "port=8091 delay=2"
 
     - name: Initialize primary node
-      command: docker exec -i couch "/opt/couchbase/bin/couchbase-cli node-init -c {{cb_primary_node}}:{cb_port} --user={{cb_admin}} --password={{cb_password}} --cluster-init-username={{cb_admin}} --node-init-hostname={{ansible_fqdn}}"
       when: cb_major_version['stdout'] != "2"
+      shell: "docker exec -i couch couchbase-cli node-init -c {{ cb_host }}:{{ cb_port }} --user={{ cb_user }} --password={{ cb_password }} --cluster-init-username={{ cb_user }} --node-init-hostname={{ cb_hostname }}"
+      
 
     - name: Wait for Admin
       wait_for: "port=8091 delay=2"
 
-    - name: Configure cluster settings
-      command: docker exec -i couch "/opt/couchbase/bin/couchbase-cli cluster-init -c {{cb_primary_node}}:{cb_port} --user={{cb_admin}} --password={{cb_password}} --cluster-init-username={{cb_admin}} --cluster-init-password={{cb_password}} --cluster-init-port=8091 --cluster-init-ramsize={{cb_cluster_ram}}"
-      when: cb_major_version['stdout'] != "4"
+    - name: Configure v3 cluster settings
+      when: cb_major_version['stdout'] == "3"
+      shell: "docker exec -i couch couchbase-cli cluster-init -c {{ cb_host }}:{{ cb_port }} --user={{ cb_user }} --password={{ cb_password }} --cluster-init-username={{ cb_user }} --cluster-init-password={{ cb_password }} --cluster-init-port=8091 --cluster-ramsize={{ cb_cluster_ram }}"
 
-    - name: Configure cluster settings
-      command: docker exec -i couch "/opt/couchbase/bin/couchbase-cli cluster-init -c {{cb_primary_node}}:{cb_port} --user={{cb_admin}} --password={{cb_password}} --cluster-init-username={{cb_admin}} --cluster-init-password={{cb_password}} --cluster-init-port=8091 --cluster-init-ramsize={{cb_cluster_ram}} --services=services={{cb_services}}"
+    - name: Configure v4 cluster settings
       when: cb_major_version['stdout'] == "4"
+      shell: "docker exec -i couch couchbase-cli cluster-init -c {{ cb_host }}:{{ cb_port }} --user={{ cb_user }} --password={{ cb_password }} --cluster-init-username={{ cb_user }} --cluster-init-password={{ cb_password }} --cluster-init-port=8091 --cluster-ramsize={{ cb_cluster_ram }} --services={{ cb_services }} --cluster-index-ramsize={{ cb_cluster_index_ram }}"
 
     - name: Verify node health
-      shell: docker exec -i "/opt/couchbase/bin/couchbase-cli server-list -c {{cb_primary_node}}:{{cb_admin_port}} --user={{cb_admin}} --password={{cb_password}} | awk '/{{cb_primary_node}}:{{cb_admin_port}}/ {print $3}'"
+      shell: "docker exec -i couch couchbase-cli server-list -c {{ cb_host }}:{{ cb_port }} --user={{ cb_user }} --password={{ cb_password }} | awk '/{{ cb_host }}:{{ cb_port }}/ {print $3}'"
       register: cb_health
       failed_when: cb_health['stdout'] != "healthy"
 
+    - name: Check for aca bucket
+      uri:
+        url: "http://{{ cb_host }}:{{ cb_port }}/pools/default/buckets/{{ cb_bucket }}"
+        user: "{{ cb_user }}"
+        password: "{{ cb_password }}"
+        status_code: 200, 404
+      register: aca_bucket_result
+
     - name: Create new bucket
-      command: docker exec -i couch "/opt/couchbase/bin/couchbase-cli bucket-create -c {{cb_primary_node}}:{cb_port} --user={{cb_admin}} --password={{cb_password}} --bucket={{cb_bucket_name}} --bucket-type={{cb_bucket_type}} --bucket-password={{cb_password}} --bucket-ramsize={{cb_bucket_ram}} --bucket-replica={{cb_bucket_replicas}}"
-      when: cb_health['stdout'] == "healthy"
+      when: 
+        - cb_health['stdout'] == "healthy"
+        - aca_bucket_result.status == 404
+      shell: "docker exec -i couch couchbase-cli bucket-create -c {{ cb_host }}:{{ cb_port }} --user={{ cb_user }} --password={{ cb_password }} --bucket={{ cb_bucket }} --bucket-type={{ cb_bucket_type }} --bucket-password={{ cb_password }} --bucket-ramsize={{ cb_bucket_ram }} --bucket-replica={{ cb_bucket_replicas }}"
 
+    - name: Get XDCR destination entries
+      uri:
+        url: "http://{{ cb_host }}:{{ cb_port }}/pools/default/remoteClusters"
+        user: "{{ cb_user }}"
+        password: "{{ cb_password }}"
+        force_basic_auth: yes
+        follow_redirects: all
+        return_content: yes
+      register: xdcr_hosts_list
 
-    # Init XDCR to elasticsearch
-#    docker exec -i couch couchbase-cli xdcr-setup -c 127.0.0.1:8091 -u $COUCHBASE_USER -p $COUCHBASE_PASSWORD --create --xdcr-cluster-name=elasticsearch --xdcr-hostname=elastic:9091 --xdcr-username=$COUCHBASE_USER --xdcr-password=$COUCHBASE_PASSWORD
-#    docker exec -i couch couchbase-cli xdcr-replicate -c 127.0.0.1:8091 -u $COUCHBASE_USER -p $COUCHBASE_PASSWORD --create --xdcr-from-bucket=aca --xdcr-cluster-name=elasticsearch --xdcr-to-bucket=aca --xdcr-replication-mode=capi
+    # Assume no other XDCR destinations were added for now (Later: confirm the list has no elastic entry)
+    - name: Add elasticsearch XDCR host
+      when: xdcr_hosts_list.json == []
+      shell: "docker exec -i couch couchbase-cli xdcr-setup -c {{ cb_host }}:{{ cb_port }} --user={{ cb_user }} --password={{ cb_password }} --create --xdcr-cluster-name={{ es_host }} --xdcr-hostname={{ es_host }}:{{ es_port }} --xdcr-username={{ cb_user }} --xdcr-password={{ cb_password }}"
 
-
-# xdcr-setup OPTIONS:
-#   --create                               create a new xdcr configuration
-#   --edit                                 modify existed xdcr configuration
-#   --delete                               delete existed xdcr configuration
-#   --list                                 list all xdcr configurations
-#   --xdcr-cluster-name=CLUSTERNAME        cluster name
-#   --xdcr-hostname=HOSTNAME               remote host name to connect to
-#   --xdcr-username=USERNAME               remote cluster admin username
-#   --xdcr-password=PASSWORD               remote cluster admin password
-#   --xdcr-demand-encryption=[0|1]         allow data encrypted using ssl
-#   --xdcr-certificate=CERTIFICATE         pem-encoded certificate. Need be present if xdcr-demand-encryption is true
-
-# xdcr-replicate OPTIONS:
-#   --create                               create and start a new replication
-#   --delete                               stop and cancel a replication
-#   --list                                 list all xdcr replications
-#   --pause                                pause the replication
-#   --resume                               resume the replication
-#   --settings                             update settings for the replication
-#   --xdcr-replicator=REPLICATOR           replication id
-#   --xdcr-from-bucket=BUCKET              local bucket name to replicate from
-#   --xdcr-cluster-name=CLUSTERNAME        remote cluster to replicate to
-#   --xdcr-to-bucket=BUCKETNAME            remote bucket to replicate to
-#   --max-concurrent-reps=[32]             maximum concurrent replications per bucket, 8 to 256.
-#   --checkpoint-interval=[1800]           intervals between checkpoints, 60 to 14400 seconds.
-#   --worker-batch-size=[500]              doc batch size, 500 to 10000.
-#   --doc-batch-size=[2048]KB              document batching size, 10 to 100000 KB
-#   --failure-restart-interval=[30]        interval for restarting failed xdcr, 1 to 300 seconds
-#   --optimistic-replication-threshold=[256] document body size threshold (bytes) to trigger optimistic replication
-#   --xdcr-replication-mode=[xmem|capi]    replication protocol, either capi or xmem.
+    - name: Create XDCR to elasticsearch
+      uri:
+        url: "http://{{ cb_host }}:{{ cb_port }}/controller/createReplication"
+        user: "{{ cb_user }}"
+        password: "{{ cb_password }}"
+        force_basic_auth: yes
+        follow_redirects: all
+        method: POST
+        body: "fromBucket={{ cb_bucket }}&toCluster={{ es_host }}&toBucket={{ es_index }}&replicationType=continuous&type=capi"
+        status_code: 200, 400
+        # 400 when it already exists. OK for now. 
+        # Later, only run if it doesn't exist (/pool/default/tasks must not contain the elastic xdcr):
+        # example /pools/default/tasks with existing XDCR: 
+        # [{"type":"rebalance","status":"notRunning","statusIsStale":false,"masterRequestTimedOut":false},{"cancelURI":"/controller/cancelXDCR/c74f8d9f4fff3e20b82cb556070c6d10%2Faca%2Faca","settingsURI":"/settings/replications/c74f8d9f4fff3e20b82cb556070c6d10%2Faca%2Faca","status":"running","replicationType":"capi","continuous":true,"filterExpression":"","id":"c74f8d9f4fff3e20b82cb556070c6d10/aca/aca","pauseRequested":false,"source":"aca","target":"/remoteClusters/c74f8d9f4fff3e20b82cb556070c6d10/buckets/aca","type":"xdcr","recommendedRefreshPeriod":10,"changesLeft":0,"docsChecked":0,"docsWritten":0,"maxVBReps":null,"errors":[]}]
