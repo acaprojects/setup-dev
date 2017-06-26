@@ -2,9 +2,6 @@ version: "2.1"
 networks:
   aca:
     driver: bridge
-#    ipam:
-#      config:
-#      - subnet: 172.18.0.0/28
 
 services:
   search:
