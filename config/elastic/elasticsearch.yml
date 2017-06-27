@@ -3,7 +3,7 @@ network.publish_host: _site_
 discovery.zen.ping.multicast.enabled: false
 
 # Set a cluster name and password for couchbase
-cluster.name: ${ES_CLUSTER}
+cluster.name: aca
 couchbase.password: ${CB_PASS}
 couchbase.username: ${CB_USER}
 #couchbase.ignoreFailures: true

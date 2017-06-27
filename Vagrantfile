@@ -1,5 +1,5 @@
 # List plugins dependencies
-plugins_dependencies = %w( vagrant-docker-compose )
+plugins_dependencies = %w( vagrant-env vagrant-docker-compose )
 plugin_status = false
 plugins_dependencies.each do |plugin_name|
   unless Vagrant.has_plugin? plugin_name
@@ -21,7 +21,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.network "forwarded_port", guest: 8091, host: 8091, auto_correct: true   # Couchbase
   config.vm.network "forwarded_port", guest: 9200, host: 9200, auto_correct: true   # Elasticsearch
-  config.vm.network "forwarded_port", guest: 80, host: 8888, auto_correct: true   # Web
+  config.vm.network "forwarded_port", guest: 80, host: ENV['WWW_PORT'], auto_correct: true   # Web
 
   # Link docker-compose .env file to Vagrant's working directory
   config.vm.provision :shell, inline: "ln -sf /vagrant/.env"

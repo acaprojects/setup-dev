@@ -1,0 +1,11 @@
+# Initialise ACAEngine
+- name: Engine Initialisation
+  hosts: default
+
+  tasks:
+    - name: Add local authority
+      shell: "docker exec -i engine rake \"domain:add_authority[Engine,http://localhost]\""
+      
+    - name: Add backoffice app
+      shell: "docker exec -i engine rake \"domain:add_app[Backoffice,http://localhost:$WWW_PORT]\""
+      # docker-compose passes the WWW_PORT env var defined in setup-dev/.env to the engine container
