@@ -49,4 +49,10 @@ Vagrant.configure("2") do |config|
       es_index:     ENV['ES_INDEX']
     }
   end
+
+  # Init ACAEngine: Generate node ID, Add localhost domain, add backoffice app
+  config.vm.provision :ansible_local do |ansible|
+    ansible.playbook       = "ansible/engine.yml"
+    ansible.verbose        = true
+  end
 end
