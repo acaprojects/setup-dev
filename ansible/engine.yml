@@ -3,6 +3,9 @@
   hosts: default
 
   tasks:
+    - name: Generate Node ID
+      shell: "docker exec -i engine rake migrate:nodes"
+
     - name: Add local authority
       shell: "docker exec -i engine rake \"domain:add_authority[Engine,http://localhost]\""
       
