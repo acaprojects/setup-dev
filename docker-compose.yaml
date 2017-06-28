@@ -35,8 +35,6 @@ services:
       - ./data/couch:/opt/couchbase/var:Z
     environment:
       - TZ=$TZ
-      - CB_USER=$CB_USER
-      - CB_PASS=$CB_PASS
   app:
     image: quay.io/acaprojects/engine
     restart: unless-stopped
@@ -58,5 +56,6 @@ services:
       - ELASTIC=elastic
       - ELASTIC_INDEX=$ES_INDEX
       - COUCHBASE_HOST=couch
+      - COUCHBASE_BUCKET=$CB_BUCKET
       - COUCHBASE_PASSWORD=$CB_PASS
       - UV_THREADPOOL_SIZE=16

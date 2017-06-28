@@ -8,18 +8,14 @@
     cb_host: 127.0.0.1
     cb_port: 8091
     cb_hostname: 127.0.0.1
-    cb_user: {{ ansible_env.CB_USER }}
-    cb_password: {{ ansible_env.CB_PASS }}
     cb_cluster_ram: 256
     cb_cluster_index_ram: 256
     cb_services: data,index
-    cb_bucket: aca
     cb_bucket_type: couchbase
     cb_bucket_ram: 128
     cb_bucket_replicas: 1
     es_host: elastic
     es_port: 9091
-    es_index: {{ ansible_env.ES_INDEX }}
 
   tasks:
     - name: Get major version

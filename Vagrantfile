@@ -18,6 +18,7 @@ end
 
 Vagrant.configure("2") do |config|
   config.vm.box = "bento/ubuntu-16.10"
+  config.env.enable
 
   config.vm.network "forwarded_port", guest: 8091, host: 8091, auto_correct: true   # Couchbase
   config.vm.network "forwarded_port", guest: 9200, host: 9200, auto_correct: true   # Elasticsearch
@@ -32,11 +33,20 @@ Vagrant.configure("2") do |config|
   config.vm.provision :ansible_local do |ansible|
     ansible.playbook       = "ansible/elastic.yml"
     ansible.verbose        = true
+    ansible.extra_vars  = {
+      es_index: ENV['ES_INDEX']
+    }
   end
 
   # Init Couchbase: Create cluster, add this node, create bucket, create XDCR to elasticsearch
   config.vm.provision :ansible_local do |ansible|
     ansible.playbook       = "ansible/couch.yml"
     ansible.verbose        = true
+    ansible.extra_vars  = {
+      cb_user:      ENV['CB_USER'],
+      cb_password:  ENV['CB_PASS'],
+      cb_bucket:    ENV['CB_BUCKET'],
+      es_index:     ENV['ES_INDEX']
+    }
   end
 end
