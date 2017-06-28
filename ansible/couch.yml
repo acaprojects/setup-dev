@@ -44,7 +44,9 @@
     - name: Verify node health
       shell: "docker exec -i couch couchbase-cli server-list -c {{ cb_host }}:{{ cb_port }} --user={{ cb_user }} --password={{ cb_password }} | awk '/{{ cb_host }}:{{ cb_port }}/ {print $3}'"
       register: cb_health
-      failed_when: cb_health['stdout'] != "healthy"
+      until: cb_health['stdout'] == "healthy"
+      delay: 3
+      retries: 20
 
     - name: Check for aca bucket
       uri:
