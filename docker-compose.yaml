@@ -35,7 +35,7 @@ services:
       - ~/data/couch:/opt/couchbase/var:z
     environment:
       - TZ=$TZ
-  app:
+  engine:
     image: quay.io/acaprojects/engine
     restart: unless-stopped
     container_name: engine
@@ -59,3 +59,19 @@ services:
       - COUCHBASE_BUCKET=$CB_BUCKET
       - COUCHBASE_PASSWORD=$CB_PASS
       - UV_THREADPOOL_SIZE=16
+  # web:
+  #   image: yobasystems/alpine-nginx
+  #   container_name: nginx
+  #   restart: unless-stopped
+  #   networks:
+  #     - aca
+  #   ports:
+  #     - "80:80"
+  #   hostname: nginx
+  #   depends_on:
+  #     - engine
+  #   volumes:
+  #     - ./config/nginx/nginx.conf/:/etc/nginx/nginx.conf:ro
+  #     - ./www/:/etc/nginx/www:ro
+  #   environment:
+  #     - TZ=$TZ
