@@ -13,7 +13,7 @@
     cb_services: data,index
     cb_bucket_type: couchbase
     cb_bucket_ram: 128
-    cb_bucket_replicas: 1
+    cb_bucket_replicas: 0
     es_host: elastic
     es_port: 9091
 
