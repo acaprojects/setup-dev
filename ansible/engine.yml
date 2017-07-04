@@ -4,7 +4,7 @@
 
   tasks:
     - name: Add local authority
-      shell: "docker exec -i engine rake \"domain:add_authority[Engine,http://localhost]\""
+      shell: "docker exec -i engine rake \"domain:add_authority[Engine,http://localhost, {{ engine_password }}]\""
       
     - name: Add backoffice app
       shell: "docker exec -i engine rake \"domain:add_app[Backoffice,http://localhost:$WWW_PORT]\""
