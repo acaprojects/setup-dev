@@ -11,21 +11,27 @@
 
   tasks:
   - name: Check for aca index
-    command: "curl -s -o /dev/null -w \"%{http_code}\"  http://{{es_host}}:{{es_port}}/{{es_index}}/"
-    register: aca_index
+    uri:      
+      url: "http://{{ es_host }}:{{ es_port }}/{{ es_index }}"
+      status_code: 200, 404
+    register: aca_index_result
     delay: 3
     retries: 9
 
   - name: Check for couchbase template
-    command: "curl -s -o /dev/null -w \"%{http_code}\"  http://{{es_host}}:{{es_port}}/_template/couchbase"
-    register: couchbase_template
+    uri:      
+      url: "http://{{ es_host }}:{{ es_port }}/_template/couchbase"
+      status_code: 200, 404
+    register: couchbase_template_result
+    delay: 3
+    retries: 9
 
   - name: Upload Couchbase template
-    when: couchbase_template['stdout'] == "404"
+    when: couchbase_template_result.status == 404
     command: "curl -v -X PUT {{es_host}}:{{es_port}}/_template/couchbase -d @{{es_template}}"
 
   - name: Add aca index
-    when: aca_index['stdout'] == "404"
+    when: aca_index_result.status == 404
     uri: 
       url: "http://{{es_host}}:{{es_port}}/{{es_index}}"
       method: PUT
