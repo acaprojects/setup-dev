@@ -10,13 +10,17 @@
     es_replicas: 0
 
   tasks:
+  - name: Wait until API is up
+    wait_for: "port=9200 delay=3"
+
   - name: Check for aca index
     uri:      
       url: "http://{{ es_host }}:{{ es_port }}/{{ es_index }}"
       status_code: 200, 404
     register: aca_index_result
     delay: 3
-    retries: 9
+    retries: 20
+    until: (aca_index_result.status == 404) or (aca_index_result.status == 200)
 
   - name: Check for couchbase template
     uri:      
