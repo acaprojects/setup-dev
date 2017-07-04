@@ -1,6 +1,6 @@
 # Initialise Couchbase
 # Adapted from https://github.com/couchbaselabs/ansible-couchbase-server/blob/master/examples/cluster_init.yml
-# Uses couchbase-cli: https://developer.couchbase.com/documentation/server/4.6/cli/cbcli-intro.html
+# Uses couch API: https://developer.couchbase.com/documentation/server/4.0/install/dp4-setup-cli-rest.html
 - name: Couchbase Initialisation
   hosts: default
 
@@ -10,7 +10,9 @@
     cb_hostname: 127.0.0.1
     cb_cluster_ram: 256
     cb_cluster_index_ram: 256
-    cb_services: data,index
+    cb_services: kv
+    cb_data_path: /opt/couchbase/var/lib/couchbase/data
+    cb_index_path: /opt/couchbase/var/lib/couchbase/data
     cb_bucket_type: couchbase
     cb_bucket_ram: 128
     cb_bucket_replicas: 0
@@ -18,39 +20,61 @@
     es_port: 9091
 
   tasks:
-    - name: Get major version
-      shell: docker exec -i couch cat /opt/couchbase/VERSION.txt | cut -d '.' -f1
-      register: cb_major_version
-
-    - name: Wait for Admin
+    - name: Wait until API is up
       wait_for: "port=8091 delay=2"
 
-    - name: Initialize primary node
-      when: cb_major_version['stdout'] != "2"
-      shell: "docker exec -i couch couchbase-cli node-init -c {{ cb_host }}:{{ cb_port }} --user={{ cb_user }} --password={{ cb_password }} --cluster-init-username={{ cb_user }} --node-init-hostname={{ cb_hostname }}"
-      
+    - name: Check cluster
+      uri:
+        url: "http://{{ cb_host }}:{{ cb_port }}/pools"
+        status_code: 200, 401
+      register: cb_status
+      delay: 3
+      retries: 9
+      # Brand new clusters do not require a password. So 401 means the cluster is already initialised.
 
-    - name: Wait for Admin
-      wait_for: "port=8091 delay=2"
+    - name: Setup Services
+      when: cb_status.status != 401
+      uri:
+        url: "http://{{ cb_host }}:{{ cb_port }}/node/controller/setupServices"
+        method: POST
+        body: "services={{ cb_services }}"
+        status_code: 200
+      delay: 3
+      retries: 9
 
-    - name: Configure v3 cluster settings
-      when: cb_major_version['stdout'] == "3"
-      shell: "docker exec -i couch couchbase-cli cluster-init -c {{ cb_host }}:{{ cb_port }} --user={{ cb_user }} --password={{ cb_password }} --cluster-init-username={{ cb_user }} --cluster-init-password={{ cb_password }} --cluster-init-port=8091 --cluster-ramsize={{ cb_cluster_ram }}"
+    - name: Initialize node
+      when: cb_status.status != 401
+      uri:
+        url: "http://{{ cb_host }}:{{ cb_port }}/nodes/self/controller/settings "
+        method: POST
+        body: "path={{ cb_data_path }}&index_path={{ cb_index_path }}"
+        status_code: 200
       delay: 3
       retries: 5
 
-    - name: Configure v4 cluster settings
-      when: cb_major_version['stdout'] == "4"
-      shell: "docker exec -i couch couchbase-cli cluster-init -c {{ cb_host }}:{{ cb_port }} --user={{ cb_user }} --password={{ cb_password }} --cluster-init-username={{ cb_user }} --cluster-init-password={{ cb_password }} --cluster-init-port=8091 --cluster-ramsize={{ cb_cluster_ram }} --services={{ cb_services }} --cluster-index-ramsize={{ cb_cluster_index_ram }}"
+    - name: Setup credentials
+      when: cb_status.status != 401
+      uri:
+        url: "http://{{ cb_host }}:{{ cb_port }}/settings/web "
+        method: POST
+        body: "username={{ cb_user }}&password={{ cb_password }}&port=SAME"
+        status_code: 200, 400
       delay: 3
       retries: 5
       
     - name: Verify node health
-      shell: "docker exec -i couch couchbase-cli server-list -c {{ cb_host }}:{{ cb_port }} --user={{ cb_user }} --password={{ cb_password }} | awk '/{{ cb_host }}:{{ cb_port }}/ {print $3}'"
+      uri:
+        url: "http://{{ cb_host }}:{{ cb_port }}/pools/default"
+        user: "{{ cb_user }}"
+        password: "{{ cb_password }}"
+        force_basic_auth: yes
+        follow_redirects: all
+        return_content: yes
+        body_format: json
       register: cb_health
-      until: cb_health['stdout'] == "healthy"
       delay: 3
       retries: 20
+      until: cb_health.json.nodes[0].status == "healthy"
 
     - name: Check for aca bucket
       uri:
@@ -62,9 +86,17 @@
 
     - name: Create new bucket
       when: 
-        - cb_health['stdout'] == "healthy"
+        - cb_health.json.nodes[0].status == "healthy"
         - aca_bucket_result.status == 404
-      shell: "docker exec -i couch couchbase-cli bucket-create -c {{ cb_host }}:{{ cb_port }} --user={{ cb_user }} --password={{ cb_password }} --bucket={{ cb_bucket }} --bucket-type={{ cb_bucket_type }} --bucket-password={{ cb_password }} --bucket-ramsize={{ cb_bucket_ram }} --bucket-replica={{ cb_bucket_replicas }}"
+      uri:
+        url: "http://{{ cb_host }}:{{ cb_port }}/pools/default/buckets "
+        user: "{{ cb_user }}"
+        password: "{{ cb_password }}"
+        force_basic_auth: yes
+        follow_redirects: all
+        method: POST
+        body: "name={{ cb_bucket }}&replicaIndex={{ cb_bucket_replicas }}&ramQuotaMB={{ cb_bucket_ram }}&bucketType={{ cb_bucket_type }}&authType=sasl&saslPassword={{ cb_password }}"
+        status_code: 200, 202
 
     - name: Get XDCR destination entries
       uri:
@@ -75,11 +107,22 @@
         follow_redirects: all
         return_content: yes
       register: xdcr_hosts_list
+      until: xdcr_hosts_list.status == 200
+      delay: 3
+      retries: 9
 
     # Assume no other XDCR destinations were added for now (Later: confirm the list has no elastic entry)
-    - name: Add elasticsearch XDCR host
+    - name: Add XDCR destination cluster reference for elasticsearch
       when: xdcr_hosts_list.json == []
-      shell: "docker exec -i couch couchbase-cli xdcr-setup -c {{ cb_host }}:{{ cb_port }} --user={{ cb_user }} --password={{ cb_password }} --create --xdcr-cluster-name={{ es_host }} --xdcr-hostname={{ es_host }}:{{ es_port }} --xdcr-username={{ cb_user }} --xdcr-password={{ cb_password }}"
+      uri:
+        url: "http://{{ cb_host }}:{{ cb_port }}/pools/default/remoteClusters "
+        user: "{{ cb_user }}"
+        password: "{{ cb_password }}"
+        force_basic_auth: yes
+        follow_redirects: all
+        method: POST
+        body: "name={{ es_host }}&hostname={{ es_host }}:{{ es_port }}&username={{ cb_user }}&password={{ cb_password }}"
+        status_code: 200
 
     - name: Create XDCR to elasticsearch
       uri:
