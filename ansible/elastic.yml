@@ -13,6 +13,8 @@
   - name: Check for aca index
     command: "curl -s -o /dev/null -w \"%{http_code}\"  http://{{es_host}}:{{es_port}}/{{es_index}}/"
     register: aca_index
+    delay: 3
+    retries: 9
 
   - name: Check for couchbase template
     command: "curl -s -o /dev/null -w \"%{http_code}\"  http://{{es_host}}:{{es_port}}/_template/couchbase"
