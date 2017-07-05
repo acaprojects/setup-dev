@@ -62,6 +62,7 @@ Vagrant.configure("2") do |config|
     ansible.verbose        = true
     ansible.extra_vars  = {
       engine_password:  ENV['CB_PASS'],
+      web_port:         ENV['WWW_PORT']
     }
   end
 end

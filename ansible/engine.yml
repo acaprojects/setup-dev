@@ -3,9 +3,16 @@
   hosts: default
 
   tasks:
+    - name: Create Node document
+      shell: sg docker -c "docker exec engine rake migrate:nodes"
+      
     - name: Add local authority
-      shell: "docker exec -i engine rake \"domain:add_authority[Engine,http://localhost, {{ engine_password }}]\""
+      shell: sg docker -c "docker exec engine rake domain:add_authority[Engine,http://localhost,{{ engine_password }}]"
       
     - name: Add backoffice app
-      shell: "docker exec -i engine rake \"domain:add_app[Backoffice,http://localhost:$WWW_PORT]\""
-      # docker-compose passes the WWW_PORT env var defined in setup-dev/.env to the engine container
+      shell: sg docker -c "docker exec engine rake domain:add_app[Backoffice,http://localhost:{{ web_port }}]"
+      
+    - name: Restart Engine with new settings
+      shell: sg docker -c "docker-compose restart engine"
+      args:
+        chdir: /vagrant
