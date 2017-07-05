@@ -58,9 +58,11 @@
         url: "http://{{ cb_host }}:{{ cb_port }}/settings/web "
         method: POST
         body: "username={{ cb_user }}&password={{ cb_password }}&port=SAME"
-        status_code: 200, 400
+        status_code: 200
+      register: cb_setup_result
       delay: 3
-      retries: 5
+      retries: 9
+      # until: cb_setup_result.status == 200
       
     - name: Verify node health
       uri:
