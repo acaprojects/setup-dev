@@ -7,7 +7,7 @@ services:
   search:
     image: quay.io/acaprojects/elastic
     container_name: elastic
-    restart: unless-stopped
+    restart: always
     user: elasticsearch
     networks:
       - aca
@@ -25,7 +25,7 @@ services:
   db:
     image: couchbase:4.6.2
     container_name: couch
-    restart: unless-stopped
+    restart: always
     networks:
       - aca
     ports:
@@ -37,7 +37,7 @@ services:
       - TZ=$TZ
   engine:
     image: quay.io/acaprojects/engine
-    restart: unless-stopped
+    restart: always
     container_name: engine
     networks:
       - aca
@@ -59,10 +59,12 @@ services:
       - COUCHBASE_BUCKET=$CB_BUCKET
       - COUCHBASE_PASSWORD=$CB_PASS
       - UV_THREADPOOL_SIZE=16
+      - ENGINE_NODE_ID=$ENGINE_NODE_ID
+      - SECRET_KEY_BASE=$SECRET_KEY_BASE
   # web:
   #   image: yobasystems/alpine-nginx
   #   container_name: nginx
-  #   restart: unless-stopped
+  #   restart: always
   #   networks:
   #     - aca
   #   ports:
