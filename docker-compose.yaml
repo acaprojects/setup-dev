@@ -61,19 +61,20 @@ services:
       - UV_THREADPOOL_SIZE=16
       - ENGINE_NODE_ID=$ENGINE_NODE_ID
       - SECRET_KEY_BASE=$SECRET_KEY_BASE
-  # web:
-  #   image: yobasystems/alpine-nginx
-  #   container_name: nginx
-  #   restart: always
-  #   networks:
-  #     - aca
-  #   ports:
-  #     - "80:80"
-  #   hostname: nginx
-  #   depends_on:
-  #     - engine
-  #   volumes:
-  #     - ./config/nginx/nginx.conf/:/etc/nginx/nginx.conf:ro
-  #     - ./www/:/etc/nginx/www:ro
-  #   environment:
-  #     - TZ=$TZ
+  web:
+    image: yobasystems/alpine-nginx
+    container_name: nginx
+    restart: always
+    networks:
+      - aca
+    ports:
+      - "80:80"
+    hostname: nginx
+    depends_on:
+      - engine
+    volumes:
+      - ./config/nginx/nginx.conf/:/etc/nginx/nginx.conf:ro
+      - ./www/:/etc/nginx/html
+    environment:
+      - TZ=$TZ
+      - REPO=https://bitbucket.org/aca/backoffice-deploy.git
