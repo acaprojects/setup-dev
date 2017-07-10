@@ -5,6 +5,11 @@
   tasks:
     - name: Create Node document
       shell: sg docker -c "docker exec engine rake migrate:nodes"
+      register: result
+      until: result.rc == 0
+      retries: 9
+      delay: 1
+      ignore_errors: yes
       
     - name: Add local authority
       shell: sg docker -c "docker exec engine rake domain:add_authority[Engine,http://localhost,{{ engine_password }}]"
