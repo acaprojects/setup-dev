@@ -28,7 +28,10 @@ Vagrant.configure("2") do |config|
   config.env.enable  # Load env vars from .env file
   config.vm.network "forwarded_port", guest: 8091, host: 8091, auto_correct: true   # Couchbase
   config.vm.network "forwarded_port", guest: 9200, host: 9200, auto_correct: true   # Elasticsearch
-  config.vm.network "forwarded_port", guest: 80, host: ENV['WWW_PORT'], auto_correct: true   # Web
+  config.vm.network "forwarded_port", guest: 80, host: ENV['WWW_PORT'] #, auto_correct: true   # Web
+
+  # nginx.conf doesn't support environment variables, so substitute now
+  config.vm.provision :shell, inline: "sed -i -e \"s/\\$WWW_PORT/" + ENV['WWW_PORT'] + "/g\" /vagrant/config/nginx/nginx.conf"
 
   # Link .env file to Vagrant's working directory so docker-compose detects it
   config.vm.provision :shell, inline: "ln -sf /vagrant/.env"

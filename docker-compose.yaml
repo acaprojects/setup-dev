@@ -49,7 +49,6 @@ services:
       - search
 #    volumes:
 #      - ${ACA_DEVICE_MODULES}:/home/aca-apps/aca-device-modules:ro
-#      - ${RUBY_ENGINE_APP}:/home/aca-apps/ruby-engine-app:ro
     environment:
       - TZ=$TZ
       - WWW_PORT=$WWW_PORT
@@ -58,7 +57,8 @@ services:
       - COUCHBASE_HOST=couch
       - COUCHBASE_BUCKET=$CB_BUCKET
       - COUCHBASE_PASSWORD=$CB_PASS
-      - UV_THREADPOOL_SIZE=16
+      - UV_THREADPOOL_SIZE=4
+      - COAUTH_NO_SSL=true
       - ENGINE_NODE_ID=$ENGINE_NODE_ID
       - SECRET_KEY_BASE=$SECRET_KEY_BASE
   web:
@@ -77,4 +77,5 @@ services:
       - ./www/:/etc/nginx/html
     environment:
       - TZ=$TZ
+      - WWW_PORT=$WWW_PORT
       - REPO=https://bitbucket.org/aca/backoffice-deploy.git
