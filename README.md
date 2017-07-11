@@ -6,4 +6,4 @@ Docker containers will run inside an Ubuntu 16 VirtualBox VM.
 2. [Install Vagrant](https://www.vagrantup.com/docs/installation/)
 3. Edit .env as required
 4. In the setup-dev direcotory, run `vagrant up`
-5. Visit `http://127.0.0.1:8888/backoffice/`
+5. Visit `http://localhost:8888/backoffice/`
