@@ -4,7 +4,7 @@ networks:
     driver: bridge
 
 services:
-  search:
+  elastic:
     image: quay.io/acaprojects/elastic
     container_name: elastic
     restart: always
@@ -22,7 +22,7 @@ services:
       - TZ=$TZ
       - CB_USER=$CB_USER
       - CB_PASS=$CB_PASS
-  db:
+  couch:
     image: couchbase:4.6.2
     container_name: couch
     restart: always
@@ -61,7 +61,7 @@ services:
       - COAUTH_NO_SSL=true
       - ENGINE_NODE_ID=$ENGINE_NODE_ID
       - SECRET_KEY_BASE=$SECRET_KEY_BASE
-  web:
+  nginx:
     image: yobasystems/alpine-nginx:git
     container_name: nginx
     restart: always

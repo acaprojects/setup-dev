@@ -57,7 +57,7 @@
       uri:
         url: "http://{{ cb_host }}:{{ cb_port }}/settings/web "
         method: POST
-        body: "username={{ cb_user }}&password={{ cb_password }}&port=SAME"
+        body: "username={{ cb_user }}&password={{ cb_pass }}&port=SAME"
         status_code: 200
       register: cb_setup_result
       delay: 3
@@ -68,7 +68,7 @@
       uri:
         url: "http://{{ cb_host }}:{{ cb_port }}/pools/default"
         user: "{{ cb_user }}"
-        password: "{{ cb_password }}"
+        password: "{{ cb_pass }}"
         force_basic_auth: yes
         follow_redirects: all
         return_content: yes
@@ -82,7 +82,7 @@
       uri:
         url: "http://{{ cb_host }}:{{ cb_port }}/pools/default/buckets/{{ cb_bucket }}"
         user: "{{ cb_user }}"
-        password: "{{ cb_password }}"
+        password: "{{ cb_pass }}"
         status_code: 200, 404
       register: aca_bucket_result
 
@@ -93,18 +93,18 @@
       uri:
         url: "http://{{ cb_host }}:{{ cb_port }}/pools/default/buckets "
         user: "{{ cb_user }}"
-        password: "{{ cb_password }}"
+        password: "{{ cb_pass }}"
         force_basic_auth: yes
         follow_redirects: all
         method: POST
-        body: "name={{ cb_bucket }}&replicaIndex={{ cb_bucket_replicas }}&ramQuotaMB={{ cb_bucket_ram }}&bucketType={{ cb_bucket_type }}&authType=sasl&saslPassword={{ cb_password }}"
+        body: "name={{ cb_bucket }}&replicaIndex={{ cb_bucket_replicas }}&ramQuotaMB={{ cb_bucket_ram }}&bucketType={{ cb_bucket_type }}&authType=sasl&saslPassword={{ cb_pass }}"
         status_code: 200, 202
 
     - name: Get XDCR destination entries
       uri:
         url: "http://{{ cb_host }}:{{ cb_port }}/pools/default/remoteClusters"
         user: "{{ cb_user }}"
-        password: "{{ cb_password }}"
+        password: "{{ cb_pass }}"
         force_basic_auth: yes
         follow_redirects: all
         return_content: yes
@@ -119,18 +119,18 @@
       uri:
         url: "http://{{ cb_host }}:{{ cb_port }}/pools/default/remoteClusters "
         user: "{{ cb_user }}"
-        password: "{{ cb_password }}"
+        password: "{{ cb_pass }}"
         force_basic_auth: yes
         follow_redirects: all
         method: POST
-        body: "name={{ es_host }}&hostname={{ es_host }}:{{ es_port }}&username={{ cb_user }}&password={{ cb_password }}"
+        body: "name={{ es_host }}&hostname={{ es_host }}:{{ es_port }}&username={{ cb_user }}&password={{ cb_pass }}"
         status_code: 200
 
     - name: Create XDCR to elasticsearch
       uri:
         url: "http://{{ cb_host }}:{{ cb_port }}/controller/createReplication"
         user: "{{ cb_user }}"
-        password: "{{ cb_password }}"
+        password: "{{ cb_pass }}"
         force_basic_auth: yes
         follow_redirects: all
         method: POST

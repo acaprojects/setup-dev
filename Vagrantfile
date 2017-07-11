@@ -52,10 +52,10 @@ Vagrant.configure("2") do |config|
     ansible.playbook       = "ansible/couch.yml"
     ansible.verbose        = true
     ansible.extra_vars  = {
-      cb_user:      ENV['CB_USER'],
-      cb_password:  ENV['CB_PASS'],
-      cb_bucket:    ENV['CB_BUCKET'],
-      es_index:     ENV['ES_INDEX']
+      cb_user:   ENV['CB_USER'],
+      cb_pass:   ENV['CB_PASS'],
+      cb_bucket: ENV['CB_BUCKET'],
+      es_index:  ENV['ES_INDEX']
     }
   end
 
@@ -65,7 +65,7 @@ Vagrant.configure("2") do |config|
     ansible.verbose        = true
     ansible.extra_vars  = {
       engine_password:  ENV['CB_PASS'],
-      web_port:         ENV['WWW_PORT']
+      www_port:         ENV['WWW_PORT']
     }
   end
 end
