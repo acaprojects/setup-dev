@@ -62,7 +62,7 @@ services:
       - ENGINE_NODE_ID=$ENGINE_NODE_ID
       - SECRET_KEY_BASE=$SECRET_KEY_BASE
   web:
-    image: yobasystems/alpine-nginx
+    image: yobasystems/alpine-nginx:git
     container_name: nginx
     restart: always
     networks:
