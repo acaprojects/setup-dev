@@ -45,8 +45,8 @@ services:
       - "8080:8080"
     hostname: engine
     depends_on:
-      - db
-      - search
+      - couch
+      - elastic
 #    volumes:
 #      - ${ACA_DEVICE_MODULES}:/home/aca-apps/aca-device-modules:ro
     environment:
