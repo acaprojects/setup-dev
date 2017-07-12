@@ -1,34 +1,39 @@
 # List plugins dependencies
 plugins_dependencies = %w( vagrant-env vagrant-docker-compose )
-plugin_status = false
+restart_required = false
+
 plugins_dependencies.each do |plugin_name|
   unless Vagrant.has_plugin? plugin_name
     system("vagrant plugin install #{plugin_name}")
-    plugin_status = true
+    restart_required = true
     puts " #{plugin_name}  Dependencies installed"
   end
 end
  
-# Restart Vagrant if any new plugin installed
-if plugin_status === true
-  exec "vagrant #{ARGV.join' '}"
-else
-  puts "All Plugin Dependencies already installed"
+# If a couch password is not already defined
+if File.open('.env').grep(/CB_PASS=/).length == 0
+  puts "Generating a random 10 character password and appending to .env..."
+  open('.env', 'a') do |e|
+    e.puts "\nCB_PASS=#{rand(36**10).to_s(36)}"
+  end
+  restart_required = true
 end
 
-Vagrant.configure("2") do |config|
-  config.vm.box = "bento/ubuntu-16.10"
+# Restart Vagrant if any new plugin or env var is added
+exec "vagrant #{ARGV.join' '}" if restart_required
 
-  # Randomly generate passwords and Engine IDs/secrets
+Vagrant.configure("2") do |config|
+  config.env.enable  # Load env vars from .env file
+  config.vm.box =   "bento/ubuntu-16.10"
+  config.vm.network "forwarded_port", guest: 8091, host: 8091, auto_correct: true   # Couchbase
+  config.vm.network "forwarded_port", guest: 9200, host: 9200, auto_correct: true   # Elasticsearch
+  config.vm.network "forwarded_port", guest: 80, host: ENV['WWW_PORT'] #, auto_correct: true   # Web
+  
+  # Randomly generate Engine IDs/secrets
   config.vm.provision :ansible_local do |ansible|
     ansible.playbook       = "ansible/secrets.yml"
     ansible.verbose        = true
   end
-
-  config.env.enable  # Load env vars from .env file
-  config.vm.network "forwarded_port", guest: 8091, host: 8091, auto_correct: true   # Couchbase
-  config.vm.network "forwarded_port", guest: 9200, host: 9200, auto_correct: true   # Elasticsearch
-  config.vm.network "forwarded_port", guest: 80, host: ENV['WWW_PORT'] #, auto_correct: true   # Web
 
   # nginx.conf doesn't support environment variables, so substitute now
   config.vm.provision :shell, inline: "sed -i -e \"s/\\$WWW_PORT/" + ENV['WWW_PORT'] + "/g\" /vagrant/config/nginx/nginx.conf"
@@ -49,8 +54,8 @@ Vagrant.configure("2") do |config|
 
   # Init Couchbase: Create cluster, add this node, create bucket, create XDCR to elasticsearch
   config.vm.provision :ansible_local do |ansible|
-    ansible.playbook       = "ansible/couch.yml"
-    ansible.verbose        = true
+    ansible.playbook    = "ansible/couch.yml"
+    ansible.verbose     = true
     ansible.extra_vars  = {
       cb_user:   ENV['CB_USER'],
       cb_pass:   ENV['CB_PASS'],
