@@ -18,9 +18,10 @@
       url: "http://{{ es_host }}:{{ es_port }}/{{ es_index }}"
       status_code: 200, 404
     register: aca_index_result
-    delay: 3
-    retries: 20
     until: (aca_index_result.status == 404) or (aca_index_result.status == 200)
+    retries: 20
+    delay: 3
+    ignore_errors: yes
 
   - name: Check for couchbase template
     uri:      
