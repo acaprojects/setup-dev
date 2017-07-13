@@ -40,6 +40,7 @@ Vagrant.configure("2") do |config|
 
   # Link .env file to Vagrant's working directory so docker-compose detects it
   config.vm.provision :shell, inline: "ln -sf /vagrant/.env"
+  config.vm.provision :shell, inline: "git clone https://github.com/acaprojects/aca-device-modules --depth=1 /vagrant/aca-device-modules"
 
   config.vm.provision :docker
   config.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yaml", run: "always"
