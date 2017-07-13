@@ -47,8 +47,8 @@ services:
     depends_on:
       - couch
       - elastic
-#    volumes:
-#      - ${ACA_DEVICE_MODULES}:/home/aca-apps/aca-device-modules:ro
+    volumes:
+      - ${ACA_DEVICE_MODULES}:/home/aca-apps/aca-device-modules:ro
     environment:
       - TZ=$TZ
       - WWW_PORT=$WWW_PORT
