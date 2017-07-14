@@ -78,4 +78,4 @@ services:
     environment:
       - TZ=$TZ
       - WWW_PORT=$WWW_PORT
-      - REPO=https://bitbucket.org/aca/backoffice-deploy.git
+      - REPO=https://bitbucket.org/aca/setup-dev-ui.git
