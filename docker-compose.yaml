@@ -5,7 +5,7 @@ networks:
 
 services:
   elastic:
-    image: quay.io/acaprojects/elastic
+    image: aca0/elastic
     container_name: elastic
     restart: always
     user: elasticsearch
