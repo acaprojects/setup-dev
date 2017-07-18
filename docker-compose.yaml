@@ -17,7 +17,7 @@ services:
     volumes:
      - ./config/elastic/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
      - ./config/elastic/logging.yml:/usr/share/elasticsearch/config/logging.yml:ro
-     #- $DATA_DIR/elastic:/usr/share/elasticsearch/data:Z
+     #- /data/elastic:/usr/share/elasticsearch/data:Z
     environment:
       - TZ=$TZ
       - CB_USER=$CB_USER
@@ -32,7 +32,7 @@ services:
       - "8091:8091"
     hostname: couch
     volumes:
-      - $DATA_DIR/couch:/opt/couchbase/var:Z
+      - /data/couch:/opt/couchbase/var:Z
     environment:
       - TZ=$TZ
   engine:
@@ -48,7 +48,7 @@ services:
       - couch
       - elastic
     volumes:
-      - ${ACA_DEVICE_MODULES}:/home/aca-apps/aca-device-modules:ro
+      - ./aca-device-modules:/home/aca-apps/aca-device-modules:ro
     environment:
       - TZ=$TZ
       - WWW_PORT=$WWW_PORT
