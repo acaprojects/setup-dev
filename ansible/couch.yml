@@ -14,7 +14,8 @@
     cb_data_path: /opt/couchbase/var/lib/couchbase/data
     cb_index_path: /opt/couchbase/var/lib/couchbase/data
     cb_bucket_type: couchbase
-    cb_bucket_ram: 128
+    cb_bucket_ram: 100
+    cb_bucket_replicas_enabled: 0
     cb_bucket_replicas: 0
     es_host: elastic
     es_port: 9091
@@ -97,7 +98,7 @@
         force_basic_auth: yes
         follow_redirects: all
         method: POST
-        body: "name={{ cb_bucket }}&replicaIndex={{ cb_bucket_replicas }}&ramQuotaMB={{ cb_bucket_ram }}&bucketType={{ cb_bucket_type }}&authType=sasl&saslPassword={{ cb_pass }}"
+        body: "name={{ cb_bucket }}&replicaIndex={{ cb_bucket_replicas_enabled }}&ramQuotaMB={{ cb_bucket_ram }}&bucketType={{ cb_bucket_type }}&authType=sasl&saslPassword={{ cb_pass }}"
         status_code: 200, 202
 
     - name: Get XDCR destination entries
