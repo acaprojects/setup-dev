@@ -21,3 +21,14 @@
       shell: sg docker -c "docker-compose restart engine"
       args:
         chdir: /vagrant
+
+    - name: Scan for Drivers
+      shell: sg docker -c "docker exec engine rake discover:drivers"
+      register: result
+      until: result.rc == 0
+      retries: 9
+      delay: 1
+      ignore_errors: yes
+
+    - name: Create Demo System
+      shell: sg docker -c "docker exec engine rake demo:system1"
