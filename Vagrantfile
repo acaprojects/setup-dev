@@ -1,5 +1,5 @@
 restart_required = false
-docker_private_repo = false
+private_docker_repo = false
 
 # Install Required plugins
 plugins_required = %w( vagrant-env vagrant-docker-compose )
@@ -13,11 +13,13 @@ plugins_required.each do |plugin_name|
 end
 
 # If a private Docker image is being used, login
-if File.open('.env').grep(/DOCKER_PASSWORD=/).length == 0
-  puts "Installing plugin: vagrant-docker-login"
-  system("vagrant plugin install vagrant-docker-login")
-  docker_private_repo = true
-  restart_required = true
+if File.open('.env').grep(/DOCKER_PASSWORD=/).length > 0
+  private_docker_repo = true
+  unless Vagrant.has_plugin? 'vagrant-docker-login'
+    puts "Installing plugin: vagrant-docker-login"
+    system("vagrant plugin install vagrant-docker-login")
+    restart_required = true
+  end
 end
  
 # If a couch password is not already defined
