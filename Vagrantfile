@@ -15,7 +15,7 @@ end
 # If a private Docker image is being used, login
 if File.open('.env').grep(/DOCKER_PASSWORD=/).length == 0
   puts "Installing plugin: vagrant-docker-login"
-  system("vagrant plugin install vagrant-docker-login)
+  system("vagrant plugin install vagrant-docker-login")
   docker_private_repo = true
   restart_required = true
 end
