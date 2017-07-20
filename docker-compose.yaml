@@ -39,6 +39,7 @@ services:
     image: $DOCKER_ENGINE
     restart: always
     container_name: engine
+    command: engine-dev
     networks:
       - aca
     ports:
