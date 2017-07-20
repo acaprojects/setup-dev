@@ -36,7 +36,7 @@ services:
     environment:
       - TZ=$TZ
   engine:
-    image: aca0/engine
+    image: $DOCKER_ENGINE
     restart: always
     container_name: engine
     networks:

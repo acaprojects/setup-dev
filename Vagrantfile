@@ -1,13 +1,23 @@
-# List plugins dependencies
-plugins_dependencies = %w( vagrant-env vagrant-docker-compose )
 restart_required = false
+docker_private_repo = false
 
-plugins_dependencies.each do |plugin_name|
+# Install Required plugins
+plugins_required = %w( vagrant-env vagrant-docker-compose )
+
+plugins_required.each do |plugin_name|
   unless Vagrant.has_plugin? plugin_name
     system("vagrant plugin install #{plugin_name}")
     restart_required = true
-    puts " #{plugin_name}  Dependencies installed"
+    puts "Installing plugin: #{plugin_name}"
   end
+end
+
+# If a private Docker image is being used, login
+if File.open('.env').grep(/DOCKER_PASSWORD=/).length == 0
+  puts "Installing plugin: vagrant-docker-login"
+  system("vagrant plugin install #{plugin_name}")
+  docker_private_repo = true
+  restart_required = true
 end
  
 # If a couch password is not already defined
@@ -43,7 +53,9 @@ Vagrant.configure("2") do |config|
   config.vm.provision :shell, inline: "git clone https://github.com/acaprojects/aca-device-modules --depth=1 /vagrant/aca-device-modules || echo Using existing aca-device-modules repo."
 
   config.vm.provision :docker
+  config.vm.provision :docker_login if private_docker_repo
   config.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yaml", run: "always"
+  
 
   # Init Elasticsearch: Create aca index and upload our couchbase tamplate
   config.vm.provision :ansible_local do |ansible|
