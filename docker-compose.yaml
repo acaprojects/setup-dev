@@ -1,7 +1,12 @@
 version: "2.1"
 networks:
   aca:
-    driver: bridge
+    driver: bridge  
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.31.231.0/24
+        gateway: 172.31.231.1
 
 services:
   elastic:
@@ -10,7 +15,8 @@ services:
     restart: always
     user: elasticsearch
     networks:
-      - aca
+      aca:
+        ipv4_address: 172.31.231.2
     ports:
       - "9200:9200"
     hostname: elastic
@@ -27,7 +33,8 @@ services:
     container_name: couch
     restart: always
     networks:
-      - aca
+      aca:
+        ipv4_address: 172.31.231.3
     ports:
       - "8091:8091"
     hostname: couch
@@ -41,7 +48,8 @@ services:
     container_name: engine
     command: engine-dev
     networks:
-      - aca
+      aca:
+        ipv4_address: 172.31.231.4
     ports:
       - "8080:8080"
     hostname: engine
@@ -67,7 +75,8 @@ services:
     container_name: nginx
     restart: always
     networks:
-      - aca
+      aca:
+        ipv4_address: 172.31.231.5
     ports:
       - "80:80"
     hostname: nginx
