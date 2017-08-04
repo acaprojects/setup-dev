@@ -92,5 +92,5 @@ Vagrant.configure("2") do |config|
     }
   end
 
-  config.vm.post_up_message = "Install complete. Login to http://localhost:8888/backoffice/ with the below credentials:\nsupport@aca.im\n#{ENV['CB_PASS']}"
+  config.vm.post_up_message = "Install complete. Login to http://localhost:#{ENV['WWW_PORT']}/backoffice/ with the below credentials:\nsupport@aca.im\n#{ENV['CB_PASS']}"
 end
