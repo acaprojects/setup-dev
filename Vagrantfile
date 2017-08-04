@@ -1,7 +1,7 @@
 restart_required = false
 private_docker_repo = false
 
-puts <<-HEADER
+header = <<-HEADER
 \033[37m
                                          ``
             /dd.                  `:ohmNMNNNMNmhs.              `dd+
@@ -26,8 +26,13 @@ puts <<-HEADER
 Spinning up a development environment. One moment...
 \033[0m
 Grab the latest docs from https://developer.acaprojects.com to get started.
-
 HEADER
+
+system("
+    if [ #{ARGV[0]} = 'up' ]; then
+        echo '#{header}'
+    fi
+")
 
 # Install Required plugins
 plugins_required = %w( vagrant-env vagrant-docker-compose )
