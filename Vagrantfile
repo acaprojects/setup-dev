@@ -1,6 +1,34 @@
 restart_required = false
 private_docker_repo = false
 
+puts <<-HEADER
+\033[37m
+                                         ``
+            /dd.                  `:ohmNMNNNMNmhs.              `dd+
+           .NMMm`               /hMds/.`     `-/o.              hMMM-
+          `mMMMMy             :mMs.                            oMMMMN`
+          yMMMMMM/           yMh.                             :MMMMMMh
+         /MMMMMMMN.         yMy                              `NMMMMMMMo
+        .NMMMMMMMMd        /Mm                               hMMMMMMMMM-
+       `mMMMMMMMMMMs       dM+                              oMMMMMMMMMMm`
+       yMMMMMMMMMMMM/     `MM.                             :MMMMMMMMMMMMh
+      /MMMMMMMMMMMMMN.    `MM.                            `NMMMMMMMMMMMMM+
+     -MMMMMMMMMMMMMMMd     NM:                            dMMMMMMMMMMMMMMM-
+    `mMNNNNNNNNNNNNNMMs    yMy                           oMMNNNNNNNNNNNNNMm`
+    yMy             .NM/   .NM/                         :MN`             yMh
+   +Mm`              :MN.   -NMo                       .NM:              `mM+
+  -MM-                sMd    `yMm/                     dMo                -MM-
+ `mM+                  dMs     -yNNy+-`      .-/s-    sMd                  +Mm`
+ ody                   .dd-      `:ohmNMNNNMNmhs+`   -dd.                   ydo
+                                        ```
+\033[032m
+
+Spinning up a development environment. One moment...
+\033[0m
+Grab the latest docs from https://developer.acaprojects.com to get started.
+
+HEADER
+
 # Install Required plugins
 plugins_required = %w( vagrant-env vagrant-docker-compose )
 
