@@ -1,6 +1,6 @@
 # Initialise ACAEngine
 - name: Engine Initialisation
-  hosts: default
+  hosts: all
 
   tasks:
     - name: Create Node document

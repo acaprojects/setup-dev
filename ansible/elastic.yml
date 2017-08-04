@@ -1,6 +1,6 @@
 # Elasticsearch: Upload couchbase template and initialise DEV 'aca' index
 - name: Elasticsearch Initialisation
-  hosts: default
+  hosts: all
 
   vars:
     es_host: localhost

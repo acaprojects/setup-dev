@@ -2,7 +2,7 @@
 # Adapted from https://github.com/couchbaselabs/ansible-couchbase-server/blob/master/examples/cluster_init.yml
 # Uses couch API: https://developer.couchbase.com/documentation/server/4.0/install/dp4-setup-cli-rest.html
 - name: Couchbase Initialisation
-  hosts: default
+  hosts: all
 
   vars:
     cb_host: 127.0.0.1
