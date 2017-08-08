@@ -16,6 +16,11 @@
       
     - name: Add backoffice app
       shell: sg docker -c "docker exec engine rake domain:add_app[Backoffice,http://localhost:{{ www_port }}]"
+      when: www_port != "80"
+      
+    - name: Add backoffice app on 80
+      shell: sg docker -c "docker exec engine rake domain:add_app[Backoffice,http://localhost]"
+      when: www_port == "80"
       
     - name: Restart Engine with new settings
       shell: sg docker -c "docker-compose restart engine"
