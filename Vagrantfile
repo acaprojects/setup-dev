@@ -28,12 +28,6 @@ Spinning up a development environment. One moment...
 Grab the latest docs from https://developer.acaprojects.com to get started.
 HEADER
 
-system("
-    if [ #{ARGV[0]} = 'up' ]; then
-        echo '#{header}'
-    fi
-")
-
 # Install Required plugins
 plugins_required = %w( vagrant-env vagrant-docker-compose )
 
@@ -54,7 +48,7 @@ if File.open('.env').grep(/DOCKER_PASSWORD=/).length > 0
     restart_required = true
   end
 end
- 
+
 # If a couch password is not already defined
 if File.open('.env').grep(/CB_PASS=/).length == 0
   puts "Generating a random 10 character password and appending to .env..."
@@ -67,6 +61,9 @@ end
 # Restart Vagrant if any new plugin or env var is added
 exec "vagrant #{ARGV.join' '}" if restart_required
 
+# Print out lovely ASCII art header if we're on the way up
+system "echo '#{header}'" if ARGV[0] == 'up'
+
 Vagrant.configure("2") do |config|
   config.vm.define "ACAEngine"
 
@@ -75,7 +72,7 @@ Vagrant.configure("2") do |config|
   config.vm.network "forwarded_port", guest: 8091, host: 8091, auto_correct: true   # Couchbase
   config.vm.network "forwarded_port", guest: 9200, host: 9200, auto_correct: true   # Elasticsearch
   config.vm.network "forwarded_port", guest: 80, host: ENV['WWW_PORT'] #, auto_correct: true   # Web
-  
+
   # Randomly generate Engine IDs/secrets
   config.vm.provision :ansible_local do |ansible|
     ansible.playbook       = "ansible/secrets.yml"
@@ -92,7 +89,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision :docker
   config.vm.provision :docker_login if private_docker_repo
   config.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yaml", run: "always"
-  
+
 
   # Init Elasticsearch: Create aca index and upload our couchbase tamplate
   config.vm.provision :ansible_local do |ansible|
