@@ -51,7 +51,7 @@ end
 
 # If a couch password is not already defined
 if File.open('.env').grep(/CB_PASS=/).length == 0
-  puts "Generating a random 10 character password and appending to .env..."
+  puts "Generating a random password and appending to .env..."
   open('.env', 'a') do |e|
     e.puts "\nCB_PASS=#{rand(36**10).to_s(36)}"
   end
