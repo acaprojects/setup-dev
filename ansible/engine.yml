@@ -12,14 +12,17 @@
       ignore_errors: yes
       
     - name: Add local authority
-      shell: sg docker -c "docker exec engine rake domain:add_authority[Engine,http://localhost,{{ engine_password }}]"
+      shell: sg docker -c "docker exec engine rake domain:add_authority[engine,http://localhost,{{ engine_password }}]"
       
-    - name: Add backoffice app
-      shell: sg docker -c "docker exec engine rake domain:add_app[Backoffice,http://localhost:{{ www_port }}]"
+    - name: Add backoffice app on DEV_PORT
+      shell: sg docker -c "docker exec engine rake domain:add_app[backoffice-dev,http://localhost:{{ dev_port }}]"
+
+    - name: Add backoffice app on WWW_PORT
+      shell: sg docker -c "docker exec engine rake domain:add_app[backoffice,http://localhost:{{ www_port }}]"
       when: www_port != "80"
       
     - name: Add backoffice app on 80
-      shell: sg docker -c "docker exec engine rake domain:add_app[Backoffice,http://localhost]"
+      shell: sg docker -c "docker exec engine rake domain:add_app[backoffice,http://localhost]"
       when: www_port == "80"
       
     - name: Restart Engine with new settings
