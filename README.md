@@ -10,3 +10,8 @@ Docker containers will run inside an Ubuntu 16 VirtualBox VM.
 1. Visit `http://localhost:8888/backoffice/`
 
 Don't forget to `vagrant halt` (stop the VM) when not in use.
+
+## Front end dev uses [demo-ui](https://github.com/acaprojects/demo-ui)
+1. `cd demo-ui`
+1. `npm install`
+1. `gulp serve`
