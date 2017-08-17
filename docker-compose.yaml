@@ -61,6 +61,7 @@ services:
     environment:
       - TZ=$TZ
       - WWW_PORT=$WWW_PORT
+      - DEV_PORT=$DEV_PORT
       - RAILS_ENV=$RAILS_ENV
       - ELASTIC=elastic
       - ELASTIC_INDEX=$ES_INDEX
