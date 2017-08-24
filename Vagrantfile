@@ -68,7 +68,7 @@ Vagrant.configure("2") do |config|
   config.vm.define "ACAEngine"
 
   config.env.enable  # Load env vars from .env file
-  config.vm.box =   "bento/ubuntu-16.10"
+  config.vm.box =   "bento/ubuntu-17.04"
   config.vm.network "forwarded_port", guest: 8091, host: 8091, auto_correct: true   # Couchbase
   config.vm.network "forwarded_port", guest: 9200, host: 9200, auto_correct: true   # Elasticsearch
   config.vm.network "forwarded_port", guest: 80, host: ENV['WWW_PORT'] #, auto_correct: true   # Web
