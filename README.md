@@ -12,7 +12,7 @@ This 'local' branch facilitates deployments with minimal downloading.
 1. `git clone https://github.com/acaprojects/aca-device-modules.git`
 1. `git clone https://github.com/acaprojects/demo-ui.git`
 1. Download the base box `vagrant box add acaprojects/engine-base`
-1. Compress the base box directory to a file inside setup-dev `tar -czf ~/.vagrant.d/boxes/acaprojects-VAGRANTSLASH-engine-base/<VERSION NUMBER>/virtualbox/ ./engine-base.box`
+1. Compress the base box directory to a file inside setup-dev `tar -C ~/.vagrant.d/boxes/acaprojects-VAGRANTSLASH-engine-base/<VERSION NUMBER>/virtualbox/ -czf ./engine-base.box .`
 
 ### 2) Deploy on target machine (it still needs internet access)
 1. [Install VirtualBox](https://www.virtualbox.org/wiki/Downloads) (works with VMware and Parallels too)
