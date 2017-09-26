@@ -5,6 +5,8 @@
   hosts: all
 
   vars:
+    cb_user: "{{ ansible_env.CB_USER }}"
+    cb_pass: "{{ ansible_env.CB_PASS }}"
     cb_host: 127.0.0.1
     cb_port: 8091
     cb_hostname: 127.0.0.1
@@ -13,12 +15,14 @@
     cb_services: kv
     cb_data_path: /opt/couchbase/var/lib/couchbase/data
     cb_index_path: /opt/couchbase/var/lib/couchbase/data
+    cb_bucket: "{{ ansible_env.CB_BUCKET }}"
     cb_bucket_type: couchbase
     cb_bucket_ram: 100
     cb_bucket_replicas_enabled: 0
     cb_bucket_replicas: 0
     es_host: elastic
     es_port: 9091
+    es_index: "{{ ansible_env.ES_INDEX }}"
 
   tasks:
     - name: Wait until API is up
@@ -64,7 +68,7 @@
       delay: 3
       retries: 9
       # until: cb_setup_result.status == 200
-      
+
     - name: Verify node health
       uri:
         url: "http://{{ cb_host }}:{{ cb_port }}/pools/default"
@@ -88,7 +92,7 @@
       register: aca_bucket_result
 
     - name: Create new bucket
-      when: 
+      when:
         - cb_health.json.nodes[0].status == "healthy"
         - aca_bucket_result.status == 404
       uri:
@@ -137,7 +141,7 @@
         method: POST
         body: "fromBucket={{ cb_bucket }}&toCluster={{ es_host }}&toBucket={{ es_index }}&replicationType=continuous&type=capi"
         status_code: 200, 400
-        # 400 when it already exists. OK for now. 
+        # 400 when it already exists. OK for now.
         # Later, only run if it doesn't exist (/pool/default/tasks must not contain the elastic xdcr):
-        # example /pools/default/tasks with existing XDCR: 
+        # example /pools/default/tasks with existing XDCR:
         # [{"type":"rebalance","status":"notRunning","statusIsStale":false,"masterRequestTimedOut":false},{"cancelURI":"/controller/cancelXDCR/c74f8d9f4fff3e20b82cb556070c6d10%2Faca%2Faca","settingsURI":"/settings/replications/c74f8d9f4fff3e20b82cb556070c6d10%2Faca%2Faca","status":"running","replicationType":"capi","continuous":true,"filterExpression":"","id":"c74f8d9f4fff3e20b82cb556070c6d10/aca/aca","pauseRequested":false,"source":"aca","target":"/remoteClusters/c74f8d9f4fff3e20b82cb556070c6d10/buckets/aca","type":"xdcr","recommendedRefreshPeriod":10,"changesLeft":0,"docsChecked":0,"docsWritten":0,"maxVBReps":null,"errors":[]}]

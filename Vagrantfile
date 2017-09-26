@@ -49,15 +49,6 @@ if File.open('.env').grep(/DOCKER_PASSWORD=/).length > 0
   end
 end
 
-# If a couch password is not already defined
-if File.open('.env').grep(/CB_PASS=/).length == 0
-  puts "Generating a random password and appending to .env..."
-  open('.env', 'a') do |e|
-    e.puts "\nCB_PASS=#{rand(36**10).to_s(36)}"
-  end
-  restart_required = true
-end
-
 # Restart Vagrant if any new plugin or env var is added
 exec "vagrant #{ARGV.join' '}" if restart_required
 
@@ -67,23 +58,25 @@ system "echo '#{header}'" if ARGV[0] == 'up'
 Vagrant.configure("2") do |config|
   config.vm.define "ACAEngine"
 
-  config.env.enable  # Load env vars from .env file
+  # Load env vars from .env file for use here
+  config.env.enable
+
+  # Load .env into the guest for use by Ansible playbooks
+  config.vm.provision :shell, inline: "echo \"set -o allexport; source /vagrant/.env; set +o allexport\" > /etc/profile.d/load_env.sh"
+
+  # Define the base box
   config.vm.box =   "acaprojects/engine-base"
   config.vm.network "forwarded_port", guest: 8091, host: 8091, auto_correct: true   # Couchbase
   config.vm.network "forwarded_port", guest: 9200, host: 9200, auto_correct: true   # Elasticsearch
   config.vm.network "forwarded_port", guest: 80, host: ENV['WWW_PORT'] #, auto_correct: true   # Web
 
   # Randomly generate Engine IDs/secrets
-  config.vm.provision :ansible_local do |ansible|
-    ansible.playbook       = "ansible/secrets.yml"
-    ansible.verbose        = true
-  end
+  config.vm.provision :ansible_local, playbook: "ansible/secrets.yml", verbose: true
 
   # nginx.conf doesn't support environment variables, so substitute now
   config.vm.provision :shell, inline: "sed -i -e \"s/\\$WWW_PORT/" + ENV['WWW_PORT'] + "/g\" /vagrant/config/nginx/nginx.conf"
 
-  # Link .env file to Vagrant's working directory so docker-compose detects it
-  config.vm.provision :shell, inline: "ln -sf /vagrant/.env"
+  # Pull down the modues and demo UI repos
   config.vm.provision :shell, inline: "git clone https://github.com/acaprojects/aca-device-modules --depth=1 /vagrant/aca-device-modules || echo Using existing aca-device-modules repo."
   config.vm.provision :shell, inline: "git clone https://github.com/acaprojects/demo-ui --depth=1 /vagrant/demo-ui || echo Using existing demo-ui repo."
 
@@ -91,38 +84,14 @@ Vagrant.configure("2") do |config|
   config.vm.provision :docker_login if private_docker_repo
   config.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yaml", run: "always"
 
-
   # Init Elasticsearch: Create aca index and upload our couchbase tamplate
-  config.vm.provision :ansible_local do |ansible|
-    ansible.playbook       = "ansible/elastic.yml"
-    ansible.verbose        = true
-    ansible.extra_vars  = {
-      es_index: ENV['ES_INDEX']
-    }
-  end
+  config.vm.provision :ansible_local, playbook: "ansible/elastic.yml", verbose: true
 
   # Init Couchbase: Create cluster, add this node, create bucket, create XDCR to elasticsearch
-  config.vm.provision :ansible_local do |ansible|
-    ansible.playbook    = "ansible/couch.yml"
-    ansible.verbose     = true
-    ansible.extra_vars  = {
-      cb_user:   ENV['CB_USER'],
-      cb_pass:   ENV['CB_PASS'],
-      cb_bucket: ENV['CB_BUCKET'],
-      es_index:  ENV['ES_INDEX']
-    }
-  end
+  config.vm.provision :ansible_local, playbook: "ansible/couch.yml", verbose: true
 
   # Init ACAEngine: Generate node ID, Add localhost domain, add backoffice app
-  config.vm.provision :ansible_local do |ansible|
-    ansible.playbook       = "ansible/engine.yml"
-    ansible.verbose        = true
-    ansible.extra_vars  = {
-      engine_password:  ENV['CB_PASS'],
-      www_port:         ENV['WWW_PORT'],
-      dev_port:         ENV['DEV_PORT']
-    }
-  end
+  config.vm.provision :ansible_local, playbook: "ansible/engine.yml", verbose: true
 
   config.vm.post_up_message = "Install complete. Login to http://localhost:#{ENV['WWW_PORT']}/backoffice/ with the below credentials:\nsupport@aca.im\n#{ENV['CB_PASS']}"
 end
