@@ -55,7 +55,7 @@ Vagrant.configure("2") do |config|
   config.env.enable
 
   # Load .env into the guest for use by Ansible playbooks
-  config.vm.provision :shell, inline: "echo \"set -o allexport; source /vagrant/.env; set +o allexport\" > /etc/profile.d/load_env.sh"
+  config.vm.provision :shell, inline: 'echo "set -o allexport; source /vagrant/.env; set +o allexport" > /etc/profile.d/load_env.sh'
 
   # Define the base box
   config.vm.box = "bento/ubuntu-17.04"
@@ -100,6 +100,11 @@ Vagrant.configure("2") do |config|
           #{ENV['CB_PASS']}
 
     ACCESS_DETAILS
+  end
+
+  # Clean up an generated password / applied config
+  config.trigger.after :destroy do
+    run 'git checkout -- .env config/nginx/nginx.conf'
   end
 
   # Provide a neat way to execute tasks on the app server
