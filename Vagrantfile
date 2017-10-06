@@ -23,6 +23,7 @@ header = <<-HEADER
 Spinning up a development environment. One moment...
 \033[0m
 Grab the latest docs from https://developer.acaprojects.com to get started.
+
 HEADER
 
 # Install Required plugins
@@ -40,8 +41,6 @@ if File.open('.env').grep(/DOCKER_PASSWORD=/).length.positive?
   plugins_required << 'vagrant-docker-login'
 end
 
-# Print out lovely ASCII art header if we're on the way up
-system "echo '#{header}'" if ARGV[0] == 'up'
 # Ensure the required plugins are available, and restart the process if needed
 exec "vagrant #{ARGV.join' '}" if plugins_required.any? do |plugin_name|
   unless Vagrant.has_plugin? plugin_name
@@ -87,7 +86,21 @@ Vagrant.configure("2") do |config|
   # Init ACAEngine: Generate node ID, Add localhost domain, add backoffice app
   config.vm.provision :ansible_local, playbook: "ansible/engine.yml", verbose: true
 
-  config.vm.post_up_message = "Install complete. Login to http://localhost:#{ENV['WWW_PORT']}/backoffice/ with the below credentials:\nsupport@aca.im\n#{ENV['CB_PASS']}"
+  # Provide some nice messages as things come up
+  config.trigger.before :up do
+    puts header
+  end
+  config.trigger.after :up do
+    config.env.load
+    puts <<-ACCESS_DETAILS
+
+      Login to http://localhost:#{ENV['WWW_PORT']}/backoffice/ with the credentials below:
+
+          support@aca.im
+          #{ENV['CB_PASS']}
+
+    ACCESS_DETAILS
+  end
 
   # Provide a neat way to execute tasks on the app server
   config.exec.commands 'bundle', prepend: 'docker exec -i engine'
