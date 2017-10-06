@@ -1,6 +1,3 @@
-restart_required = false
-private_docker_repo = false
-
 header = <<-HEADER
 \033[37m
                                          ``
@@ -29,31 +26,28 @@ Grab the latest docs from https://developer.acaprojects.com to get started.
 HEADER
 
 # Install Required plugins
-plugins_required = %w( vagrant-env vagrant-docker-compose vagrant-exec )
-
-plugins_required.each do |plugin_name|
-  unless Vagrant.has_plugin? plugin_name
-    system("vagrant plugin install #{plugin_name}")
-    restart_required = true
-    puts "Installing plugin: #{plugin_name}"
-  end
-end
+plugins_required = %w[
+  vagrant-env
+  vagrant-docker-compose
+  vagrant-exec
+  vagrant-triggers
+]
 
 # If a private Docker image is being used, login
-if File.open('.env').grep(/DOCKER_PASSWORD=/).length > 0
+private_docker_repo = false
+if File.open('.env').grep(/DOCKER_PASSWORD=/).length.positive?
   private_docker_repo = true
-  unless Vagrant.has_plugin? 'vagrant-docker-login'
-    puts "Installing plugin: vagrant-docker-login"
-    system("vagrant plugin install vagrant-docker-login")
-    restart_required = true
-  end
+  plugins_required << 'vagrant-docker-login'
 end
-
-# Restart Vagrant if any new plugin or env var is added
-exec "vagrant #{ARGV.join' '}" if restart_required
 
 # Print out lovely ASCII art header if we're on the way up
 system "echo '#{header}'" if ARGV[0] == 'up'
+# Ensure the required plugins are available, and restart the process if needed
+exec "vagrant #{ARGV.join' '}" if plugins_required.any? do |plugin_name|
+  unless Vagrant.has_plugin? plugin_name
+    system "vagrant plugin install #{plugin_name}"
+  end
+end
 
 Vagrant.configure("2") do |config|
   config.vm.define "ACAEngine"
