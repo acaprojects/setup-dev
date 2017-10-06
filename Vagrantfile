@@ -29,7 +29,7 @@ Grab the latest docs from https://developer.acaprojects.com to get started.
 HEADER
 
 # Install Required plugins
-plugins_required = %w( vagrant-env vagrant-docker-compose )
+plugins_required = %w( vagrant-env vagrant-docker-compose vagrant-exec )
 
 plugins_required.each do |plugin_name|
   unless Vagrant.has_plugin? plugin_name
@@ -94,4 +94,8 @@ Vagrant.configure("2") do |config|
   config.vm.provision :ansible_local, playbook: "ansible/engine.yml", verbose: true
 
   config.vm.post_up_message = "Install complete. Login to http://localhost:#{ENV['WWW_PORT']}/backoffice/ with the below credentials:\nsupport@aca.im\n#{ENV['CB_PASS']}"
+
+  # Provide a neat way to execute tasks on the app server
+  config.exec.commands 'bundle', prepend: 'docker exec -i engine'
+  config.exec.commands %w[rails rake], prepend: 'docker exec -i engine bundle exec'
 end
