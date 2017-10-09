@@ -69,16 +69,20 @@ Vagrant.configure("2") do |config|
   # nginx.conf doesn't support environment variables, so substitute now
   config.vm.provision :shell, inline: "sed -i -e \"s/\\$WWW_PORT/" + ENV['WWW_PORT'] + "/g\" /vagrant/config/nginx/nginx.conf"
 
-  # Pull down the modues and demo UI repos
+  # Pull down the modules and demo UI repos, or update them (if possible)
   aca_repo = <<-SCRIPT
     if test -d $2; then
-        echo "Using existing $1 repo.";
+        echo "Updating $1"
+        cd $2
+        if ! git pull --no-ff; then
+            echo "Could not auto-update at this time"
+        fi
     else
-        git clone https://github.com/acaprojects/$1 $2 --depth=1;
+        git clone https://github.com/acaprojects/$1 $2 --depth=1
     fi
   SCRIPT
-  config.vm.provision :shell, inline: aca_repo, args: ["aca-device-modules", "/vagrant/aca-device-modules"]
-  config.vm.provision :shell, inline: aca_repo, args: ["demo-ui", "/vagrant/demo-ui"]
+  config.vm.provision :shell, inline: aca_repo, args: ["aca-device-modules", "/vagrant/aca-device-modules"], run: "always"
+  config.vm.provision :shell, inline: aca_repo, args: ["demo-ui", "/vagrant/demo-ui"], run: "always"
 
   config.vm.provision :docker
   config.vm.provision :docker_login if private_docker_repo
