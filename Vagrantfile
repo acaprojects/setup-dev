@@ -70,8 +70,15 @@ Vagrant.configure("2") do |config|
   config.vm.provision :shell, inline: "sed -i -e \"s/\\$WWW_PORT/" + ENV['WWW_PORT'] + "/g\" /vagrant/config/nginx/nginx.conf"
 
   # Pull down the modues and demo UI repos
-  config.vm.provision :shell, inline: "git clone https://github.com/acaprojects/aca-device-modules --depth=1 /vagrant/aca-device-modules || echo Using existing aca-device-modules repo."
-  config.vm.provision :shell, inline: "git clone https://github.com/acaprojects/demo-ui --depth=1 /vagrant/demo-ui || echo Using existing demo-ui repo."
+  aca_repo = <<-SCRIPT
+    if test -d $2; then
+        echo "Using existing $1 repo.";
+    else
+        git clone https://github.com/acaprojects/$1 $2 --depth=1;
+    fi
+  SCRIPT
+  config.vm.provision :shell, inline: aca_repo, args: ["aca-device-modules", "/vagrant/aca-device-modules"]
+  config.vm.provision :shell, inline: aca_repo, args: ["demo-ui", "/vagrant/demo-ui"]
 
   config.vm.provision :docker
   config.vm.provision :docker_login if private_docker_repo
