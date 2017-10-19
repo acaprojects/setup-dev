@@ -90,4 +90,4 @@ services:
     environment:
       - TZ=$TZ
       - WWW_PORT=$WWW_PORT
-      - REPO=https://bitbucket.org/aca/setup-dev-ui.git
+      - REPO=https://github.com/acaprojects/engine-front
