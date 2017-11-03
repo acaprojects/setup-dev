@@ -29,7 +29,7 @@ services:
       - CB_USER=$CB_USER
       - CB_PASS=$CB_PASS
   couch:
-    image: couchbase:community-4.5.3
+    image: couchbase:community-4.5.1
     container_name: couch
     restart: always
     networks:
