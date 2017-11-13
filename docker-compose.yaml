@@ -23,7 +23,7 @@ services:
     volumes:
      - ./config/elastic/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
      - ./config/elastic/logging.yml:/usr/share/elasticsearch/config/logging.yml:ro
-     #- /data/elastic:/usr/share/elasticsearch/data:Z
+     - ./data/elastic:/usr/share/elasticsearch/data
     environment:
       - TZ=$TZ
       - CB_USER=$CB_USER
@@ -39,7 +39,7 @@ services:
       - "8091:8091"
     hostname: couch
     volumes:
-      - /data/couch:/opt/couchbase/var:Z
+      - /data/couch:/opt/couchbase/var
     environment:
       - TZ=$TZ
   engine:
