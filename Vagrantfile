@@ -51,9 +51,12 @@ end
 Vagrant.configure("2") do |config|
   config.vm.define "ACAEngine"
 
+  # Randomly generate Engine IDs/secrets
+  config.vm.provision :ansible_local, playbook: "ansible/secrets.yml", verbose: true
+  # Ensure there are no Windows line endings in .env
+  config.vm.provision :shell, inline: "sed -i '1h;1!H;$!d;${g;s/\r\n//g}' /vagrant/config/nginx/nginx.conf"
   # Load env vars from .env file for use here
   config.env.enable
-
   # Load .env into the guest for use by Ansible playbooks
   config.vm.provision :shell, inline: 'echo "set -o allexport; source /vagrant/.env; set +o allexport" > /etc/profile.d/load_env.sh'
 
@@ -62,9 +65,6 @@ Vagrant.configure("2") do |config|
   config.vm.network "forwarded_port", guest: 8091, host: 8091, auto_correct: true   # Couchbase
   config.vm.network "forwarded_port", guest: 9200, host: 9200, auto_correct: true   # Elasticsearch
   config.vm.network "forwarded_port", guest: 80, host: ENV['WWW_PORT'] #, auto_correct: true   # Web
-
-  # Randomly generate Engine IDs/secrets
-  config.vm.provision :ansible_local, playbook: "ansible/secrets.yml", verbose: true
 
   # nginx.conf doesn't support environment variables, so substitute now
   config.vm.provision :shell, inline: "sed -i -e \"s/\\$WWW_PORT/" + ENV['WWW_PORT'] + "/g\" /vagrant/config/nginx/nginx.conf"
