@@ -53,8 +53,9 @@ Vagrant.configure("2") do |config|
 
   # Randomly generate Engine IDs/secrets
   config.vm.provision :ansible_local, playbook: "ansible/secrets.yml", verbose: true
-  # Ensure there are no Windows line endings in .env
-  config.vm.provision :shell, inline: "sed -i 's/\r//g' /vagrant/.env"
+  # Ensure there are no Windows line endings in .env #### TODO: Ensure Windows and Linux compatibility before re-adding this
+  # config.vm.provision :shell, inline: "sed -i 's/\r//g' /vagrant/.env"
+  
   # Load env vars from .env file for use here
   config.env.enable
   # Load .env into the guest for use by Ansible playbooks
