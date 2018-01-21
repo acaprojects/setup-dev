@@ -82,7 +82,6 @@ Vagrant.configure("2") do |config|
         git clone https://github.com/acaprojects/$1 $2 --depth=1
     fi
   SCRIPT
-  config.vm.provision :shell, inline: aca_repo, args: ["aca-device-modules", "/vagrant/aca-device-modules"], run: "always"
   config.vm.provision :shell, inline: aca_repo, args: ["demo-ui", "/vagrant/demo-ui"], run: "always"
 
   config.vm.provision :docker
