@@ -55,14 +55,14 @@ Vagrant.configure("2") do |config|
   config.vm.provision :ansible_local, playbook: "ansible/secrets.yml", verbose: true
   # Ensure there are no Windows line endings in .env #### TODO: Ensure Windows and Linux compatibility before re-adding this
   # config.vm.provision :shell, inline: "sed -i 's/\r//g' /vagrant/.env"
-  
+
   # Load env vars from .env file for use here
   config.env.enable
   # Load .env into the guest for use by Ansible playbooks
   config.vm.provision :shell, inline: 'echo "set -o allexport; source /vagrant/.env; set +o allexport" > /etc/profile.d/load_env.sh'
 
   # Define the base box
-  config.vm.box = "bento/ubuntu-17.04"
+  config.vm.box = "bento/ubuntu-17.10"
   config.vm.network "forwarded_port", guest: 8091, host: 8091, auto_correct: true   # Couchbase
   config.vm.network "forwarded_port", guest: 9200, host: 9200, auto_correct: true   # Elasticsearch
   config.vm.network "forwarded_port", guest: 80, host: ENV['WWW_PORT'] #, auto_correct: true   # Web
