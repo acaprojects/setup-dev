@@ -10,9 +10,7 @@ networks:
 
 volumes:
   elastic-data:
-    name: aca-elastic-persistent-data
   couch-data:
-    name: aca-couch-persistent-data
 
 services:
   elastic:
