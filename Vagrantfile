@@ -34,13 +34,6 @@ plugins_required = %w[
   vagrant-triggers
 ]
 
-# If a private Docker image is being used, login
-private_docker_repo = false
-if File.open('.env').grep(/DOCKER_PASSWORD=/).length.positive?
-  private_docker_repo = true
-  plugins_required << 'vagrant-docker-login'
-end
-
 # Ensure the required plugins are available, and restart the process if needed
 exec "vagrant #{ARGV.join' '}" if plugins_required.any? do |plugin_name|
   unless Vagrant.has_plugin? plugin_name
@@ -85,7 +78,6 @@ Vagrant.configure("2") do |config|
   config.vm.provision :shell, inline: aca_repo, args: ["demo-ui", "/vagrant/demo-ui"], run: "always"
 
   config.vm.provision :docker
-  config.vm.provision :docker_login if private_docker_repo
   config.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yaml", run: "always"
 
   # Init Elasticsearch: Create aca index and upload our couchbase tamplate
