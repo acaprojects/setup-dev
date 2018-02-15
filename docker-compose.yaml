@@ -24,6 +24,9 @@ services:
     ports:
       - "9200:9200"
     hostname: elastic
+    logging:
+      options:
+       max-size: 99m
     volumes:
      - ./config/elastic/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
      - ./config/elastic/logging.yml:/usr/share/elasticsearch/config/logging.yml:ro
@@ -42,6 +45,9 @@ services:
     ports:
       - "8091:8091"
     hostname: couch
+    logging:
+      options:
+       max-size: 99m
     volumes:
       - couch-data:/opt/couchbase/var
     environment:
@@ -57,6 +63,9 @@ services:
     ports:
       - "8080:8080"
     hostname: engine
+    logging:
+      options:
+       max-size: 99m
     depends_on:
       - couch
       - elastic
@@ -86,6 +95,9 @@ services:
     ports:
       - "80:80"
     hostname: nginx
+    logging:
+      options:
+       max-size: 99m
     depends_on:
       - engine
     volumes:
