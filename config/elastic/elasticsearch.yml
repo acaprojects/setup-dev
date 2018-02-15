@@ -6,7 +6,7 @@ discovery.zen.ping.multicast.enabled: false
 cluster.name: aca
 couchbase.password: ${CB_PASS}
 couchbase.username: ${CB_USER}
-#couchbase.ignoreFailures: true
+couchbase.ignoreFailures: true
 
 #
 # Document Mappings
