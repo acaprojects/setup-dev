@@ -28,9 +28,7 @@ services:
       options:
        max-size: 99m
     volumes:
-     - ./config/elastic/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
-     - ./config/elastic/logging.yml:/usr/share/elasticsearch/config/logging.yml:ro
-     - elastic-data:/usr/share/elasticsearch/data
+      - elastic-data:/usr/share/elasticsearch/data
     environment:
       - TZ=$TZ
       - CB_USER=$CB_USER
