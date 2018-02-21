@@ -45,7 +45,7 @@ Vagrant.configure("2") do |config|
   config.vm.define "ACAEngine"
 
   # Ensure there are no Windows line endings in .env #### TODO: Ensure Windows and Linux compatibility before re-adding this
-  config.vm.provision :shell, inline: "sed -i 's/.$//' /vagrant/.env"
+  config.vm.provision :shell, inline: "sed -i 's/\r$//' /vagrant/.env"
 
   # Randomly generate Engine IDs/secrets
   config.vm.provision :ansible_local, playbook: "ansible/secrets.yml", verbose: true
