@@ -44,8 +44,8 @@ end
 Vagrant.configure("2") do |config|
   config.vm.define "ACAEngine"
 
-  # Ensure there are no Windows line endings in .env #### TODO: Ensure Windows and Linux compatibility before re-adding this
-  config.vm.provision :shell, inline: "sed -i 's/\r$//' /vagrant/.env"
+  # Ensure there are no Windows line endings in .env
+  config.vm.provision :shell,inline: "sed -i 's/\r$//' /vagrant/.env"
 
   # Randomly generate Engine IDs/secrets
   config.vm.provision :ansible_local, playbook: "ansible/secrets.yml", verbose: true
@@ -113,6 +113,7 @@ Vagrant.configure("2") do |config|
   end
 
   # Provide a neat way to execute tasks on the app server
-  config.exec.commands 'bundle', prepend: 'docker exec -i engine'
+  config.exec.commands 'restart', prepend: 'docker restart' # e.g. 'vagrant exec restart engine', or nginx/couch/elastic
+  config.exec.commands 'bundle', prepend: 'docker exec -i engine' # e.g. 'vagrant exec bundle update'
   config.exec.commands %w[rails rake], prepend: 'docker exec -i engine bundle exec'
 end
