@@ -42,6 +42,3 @@
       retries: 9
       delay: 1
       ignore_errors: yes
-
-    - name: Create Demo System
-      shell: sg docker -c "docker exec engine rake demo:system1"
