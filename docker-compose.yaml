@@ -1,7 +1,7 @@
 version: "2.1"
 networks:
   aca:
-    driver: bridge  
+    driver: bridge
     ipam:
       driver: default
       config:
@@ -76,7 +76,6 @@ services:
     environment:
       - TZ=$TZ
       - WWW_PORT=$WWW_PORT
-      - DEV_PORT=$DEV_PORT
       - RAILS_ENV=$RAILS_ENV
       - ELASTIC=elastic
       - ELASTIC_INDEX=$ES_INDEX
