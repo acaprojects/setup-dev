@@ -77,7 +77,6 @@ Vagrant.configure("2") do |config|
     fi
   SCRIPT
   config.vm.provision :shell, inline: aca_repo, args: ["aca-device-modules", "/vagrant/aca-device-modules"]
-  config.vm.provision :shell, inline: aca_repo, args: ["ngx-composer-starter", "/vagrant/demo-ui"], run: "always"
 
   config.vm.provision :docker
   config.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yaml", run: "always"
