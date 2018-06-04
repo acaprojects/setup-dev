@@ -31,7 +31,6 @@ plugins_required = %w[
   vagrant-env
   vagrant-docker-compose
   vagrant-exec
-  vagrant-triggers
 ]
 
 # Ensure the required plugins are available, and restart the process if needed
@@ -91,24 +90,26 @@ Vagrant.configure("2") do |config|
   config.vm.provision :ansible_local, playbook: "ansible/engine.yml", verbose: true
 
   # Provide some nice messages as things come up
-  config.trigger.before :up do
-    puts header
+  config.trigger.before :up do |trigger|
+    trigger.info = header
   end
-  config.trigger.after :up do
+
+  config.trigger.after :provision do |trigger|
     config.env.load
-    puts <<-ACCESS_DETAILS
+    access_detals = <<-ACCESS_DETAILS
 
-      Login to http://localhost:#{ENV['WWW_PORT']}/backoffice/ with the credentials below:
+        Login to http://localhost:#{ENV['WWW_PORT']}/backoffice/ with the credentials below:
 
-          support@aca.im
-          #{ENV['CB_PASS']}
+            support@aca.im
+            #{ENV['CB_PASS']}
 
-    ACCESS_DETAILS
+      ACCESS_DETAILS
+    config.vm.post_up_message = access_detals
   end
 
   # Clean up an generated password / applied config
-  config.trigger.after :destroy do
-    run 'git checkout -- .env config/nginx/nginx.conf'
+  config.trigger.after :destroy do |trigger|
+    trigger.run ={inline: 'git checkout -- .env config/nginx/nginx.conf'}
   end
 
   # Provide a neat way to execute tasks on the app server
