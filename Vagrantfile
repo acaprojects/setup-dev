@@ -56,7 +56,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision :shell, inline: 'echo "set -o allexport; source /vagrant/.env; set +o allexport" > /etc/profile.d/load_env.sh'
 
   # Define the base box
-  config.vm.box = "bento/ubuntu-17.10"
+  config.vm.box = "bento/ubuntu-16.04"
   config.vm.network "forwarded_port", guest: 8091, host: 8091, auto_correct: true   # Couchbase
   config.vm.network "forwarded_port", guest: 9200, host: 9200, auto_correct: true   # Elasticsearch
   config.vm.network "forwarded_port", guest: 80, host: ENV['WWW_PORT'] #, auto_correct: true   # Web
@@ -73,10 +73,10 @@ Vagrant.configure("2") do |config|
         echo "Could not auto-update at this time"
       fi
     else
-      git clone https://github.com/acaprojects/$1 $2 --depth=1
+      git clone https://github.com/acaprojects/$1 $2 --depth=1 $3
     fi
   SCRIPT
-  config.vm.provision :shell, inline: aca_repo, args: ["aca-device-modules -b beta", "/vagrant/aca-device-modules"]
+  config.vm.provision :shell, inline: aca_repo, args: ["aca-device-modules", "-b beta", "/vagrant/aca-device-modules"]
 
   config.vm.provision :docker
   config.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yaml", run: "always"
