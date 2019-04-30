@@ -66,7 +66,7 @@ Vagrant.configure("2") do |config|
 
   # Pull down the modules and demo UI repos, or update them (if possible)
   aca_repo = <<-SCRIPT
-    if test -d $2; then
+    if test -d $3; then
       echo "Updating $1"
       cd $2
       if ! git pull --no-ff; then
