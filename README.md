@@ -1,4 +1,7 @@
-# ACAEngine Development Environment
+# DEPRECATED
+This environment has moved to a Vagrant Box. Please see: https://docs.acaengine.com/developer-guide/getting-started
+
+## ACAEngine Development Environment
 
 Starter pack for initialising a local, development instance of ACAEngine, ideal for Windows/Mac/Linux dev laptops. Docker containers will run inside an Ubuntu 17 VirtualBox VM.
 
@@ -11,13 +14,13 @@ Starter pack for initialising a local, development instance of ACAEngine, ideal 
 Don't forget to `vagrant halt` (stop the VM) when not in use.
 
 
-## Front-end development
+### Front-end development
 
 Experiences built on ACAEngine can use any framework (web, or native) that you are comfortable working with by interfacing with our API.
 
 To abstract some of the low-level details though we provide [Composer](https://github.com/acaprojects/ngx-composer), our Angular based application framework. An example application - [ngx-composer-starter](https://github.com/acaprojects/ngx-composer-starter) - pairs with the 'Demo Logic' module loaded as part of this development environment. It will be automatically downloaded when you first boot.
 
 
-## Further reading
+### Further reading
 
 To keep learning more, please head over to the [ACA Developer Guide](https://developer.acaprojects.com/).
